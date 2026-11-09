@@ -180,12 +180,13 @@
             transition: background-color 0.15s;
         }
 
-        @media (max-width: 400px) {
+        @media (max-width: 420px) {
             .cell {
-                width: 26px;
-                height: 26px;
-                font-size: 0.85rem;
+                width: 22px;
+                height: 22px;
+                font-size: 0.8rem;
             }
+            .card { padding: 0.9rem; }
         }
 
         .cell.selecting {
@@ -262,4 +263,487 @@
         .btn {
             flex: 1;
             padding: 0.75rem 1rem;
-            border:
+            border: 2px solid var(--black);
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: var(--black);
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.15s, color 0.15s;
+            text-align: left;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--gold);
+        }
+
+        .btn:disabled {
+            cursor: default;
+        }
+
+        .btn.correct {
+            background-color: var(--correct-green);
+            border-color: var(--correct-green);
+            color: #ffffff;
+        }
+
+        .btn.wrong {
+            background-color: var(--wrong-red);
+            border-color: var(--wrong-red);
+            color: #ffffff;
+        }
+
+        .btn-primary {
+            flex: none;
+            text-align: center;
+            background-color: var(--black);
+            color: var(--gold);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            color: var(--black);
+        }
+
+        /* Trivia */
+        .question-count {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+
+        .feedback {
+            min-height: 3rem;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
+        .feedback.good { color: var(--correct-green); }
+        .feedback.bad { color: var(--wrong-red); }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .ws-message {
+            text-align: center;
+            margin-top: 0.75rem;
+            min-height: 1.5rem;
+            font-weight: bold;
+            color: var(--correct-green);
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            padding: 1rem;
+            margin-top: auto;
+        }
+
+        footer a { color: inherit; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Mizzou Football Trivia &amp; Word Search</h1>
+        <p>Read up, test your Tigers knowledge, then hunt for the hidden words.</p>
+    </header>
+
+    <div class="container">
+        <div class="stats-bar full-width">
+            <span>Trivia: <span id="score">0</span> / <span id="total">0</span></span>
+            <span>Words: <span id="words-found">0</span> / <span id="words-total">0</span></span>
+        </div>
+
+        <!-- Article -->
+        <section class="card">
+            <div class="card-header">
+                <span class="card-title">Game Day Primer</span>
+            </div>
+            <div class="article-content">
+                <p>The Missouri <span class="article-highlight">Tigers</span> play their home games on
+                    <span class="article-highlight">Faurot</span> Field at Memorial Stadium in
+                    <span class="article-highlight">Columbia</span>. The field is named for Don Faurot,
+                    the longtime Missouri coach credited with inventing the Split-T formation in 1941.</p>
+                <p>Above the north end zone sits the <span class="article-highlight">Rock M</span>, a giant
+                    white "M" built from rocks by Mizzou freshmen in 1927. Mizzou also claims to have started
+                    college <span class="article-highlight">Homecoming</span> back in 1911, when alumni were
+                    invited "home" for the game against Kansas.</p>
+                <p>That Kansas game was part of the <span class="article-highlight">Border War</span>, one of
+                    the oldest rivalries in college football. After Missouri moved from the Big 12 to the
+                    SEC in 2012, the series went on hiatus.</p>
+                <p>Cheering on every <span class="article-highlight">Touchdown</span> is
+                    <span class="article-highlight">Truman</span> the Tiger, the school's mascot, dressed
+                    in black and gold.</p>
+                <p>Coach Eli <span class="article-highlight">Drinkwitz</span>, hired in December 2019, led the
+                    Tigers to an 11-2 season in 2023, capped by a 14-3 win over Ohio State in the
+                    <span class="article-highlight">Cotton Bowl</span>.</p>
+                <p class="source-tag">Highlighted words are hidden in the word search.</p>
+            </div>
+        </section>
+
+        <!-- Word Search -->
+        <section class="card">
+            <div class="card-header">
+                <span class="card-title">Word Search</span>
+                <button class="btn btn-primary" id="new-puzzle" style="padding:0.4rem 0.8rem;font-size:0.8rem;">New Puzzle</button>
+            </div>
+            <div class="word-bank" id="word-bank"></div>
+            <div class="grid-container">
+                <div class="grid" id="grid"></div>
+            </div>
+            <div class="ws-message" id="ws-message"></div>
+        </section>
+
+        <!-- Trivia -->
+        <section class="card full-width">
+            <div class="card-header">
+                <span class="card-title">Tiger Trivia</span>
+                <span class="question-count" id="question-count"></span>
+            </div>
+            <div class="question-text" id="question-text"></div>
+            <div class="answers" id="answers"></div>
+            <div class="feedback" id="feedback"></div>
+            <div>
+                <button class="btn btn-primary" id="next-btn" disabled>Next Question</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- Result modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h2 id="modal-title"></h2>
+            <p id="modal-text"></p>
+            <div class="modal-options">
+                <button class="btn btn-primary" id="modal-close">Keep Playing</button>
+                <button class="btn btn-primary" id="modal-restart">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        Game by Hannah Moore. Rebuilt in November 2026 after the original file was found incomplete.
+        <a href="../index.html">Back to the arcade</a>
+    </footer>
+
+<script>
+    // ---------- Trivia ----------
+    const QUESTIONS = [
+        {
+            q: "What is the name of the field where Mizzou plays its home football games?",
+            options: ["Faurot Field", "Kyle Field", "Tiger Field", "Truman Field"],
+            answer: 0,
+            explain: "Faurot Field at Memorial Stadium is named for coach Don Faurot."
+        },
+        {
+            q: "Don Faurot is credited with inventing which offensive formation?",
+            options: ["The Split-T", "The Wishbone", "The Spread", "The Wing-T"],
+            answer: 0,
+            explain: "Faurot introduced the Split-T at Missouri in 1941."
+        },
+        {
+            q: "What is the name of Mizzou's tiger mascot?",
+            options: ["Truman", "Mike", "Aubie", "Hobbs"],
+            answer: 0,
+            explain: "Truman the Tiger is named after Missouri native President Harry S. Truman."
+        },
+        {
+            q: "Which conference did Missouri join in 2012?",
+            options: ["SEC", "Big Ten", "ACC", "Big 12"],
+            answer: 0,
+            explain: "Missouri left the Big 12 for the Southeastern Conference in 2012."
+        },
+        {
+            q: "Mizzou claims to have started which college tradition in 1911?",
+            options: ["Homecoming", "Senior Night", "The tailgate", "The marching band halftime show"],
+            answer: 0,
+            explain: "Mizzou invited alumni to come \"home\" for the 1911 game against Kansas."
+        },
+        {
+            q: "The giant white letter above the north end zone is known as what?",
+            options: ["The Rock M", "The Big M", "The Stone M", "The Tiger M"],
+            answer: 0,
+            explain: "Mizzou freshmen built the Rock M out of rocks in 1927."
+        },
+        {
+            q: "Mizzou's long-running rivalry with Kansas is known as what?",
+            options: ["The Border War", "The Iron Bowl", "The Battle Line", "The Red River Rivalry"],
+            answer: 0,
+            explain: "The Border War with Kansas is one of the oldest rivalries in college football."
+        },
+        {
+            q: "Which team did Mizzou beat in the Cotton Bowl to finish its 11-2 season in 2023?",
+            options: ["Ohio State", "Michigan", "Texas", "Oregon"],
+            answer: 0,
+            explain: "Missouri beat Ohio State 14-3 in the Cotton Bowl on Dec. 29, 2023."
+        },
+        {
+            q: "Which head coach did Mizzou hire in December 2019?",
+            options: ["Eli Drinkwitz", "Barry Odom", "Gary Pinkel", "Lane Kiffin"],
+            answer: 0,
+            explain: "Eli Drinkwitz came to Missouri from Appalachian State."
+        },
+        {
+            q: "What are Mizzou's school colors?",
+            options: ["Black and gold", "Black and orange", "Blue and gold", "Purple and gold"],
+            answer: 0,
+            explain: "Mizzou has worn black and gold for well over a century."
+        }
+    ];
+
+    const shuffle = arr => {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    };
+
+    let order = [], qIndex = 0, score = 0, answered = 0;
+
+    const el = id => document.getElementById(id);
+
+    function startTrivia() {
+        order = shuffle(QUESTIONS);
+        qIndex = 0; score = 0; answered = 0;
+        el("score").textContent = 0;
+        el("total").textContent = 0;
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const item = order[qIndex];
+        el("question-count").textContent = `Question ${qIndex + 1} of ${order.length}`;
+        el("question-text").textContent = item.q;
+        el("feedback").textContent = "";
+        el("feedback").className = "feedback";
+        el("next-btn").disabled = true;
+        el("next-btn").textContent = qIndex === order.length - 1 ? "See Results" : "Next Question";
+
+        const answers = el("answers");
+        answers.innerHTML = "";
+        const opts = shuffle(item.options.map((text, i) => ({ text, correct: i === item.answer })));
+        opts.forEach(opt => {
+            const b = document.createElement("button");
+            b.className = "btn";
+            b.textContent = opt.text;
+            b.dataset.correct = opt.correct;
+            b.addEventListener("click", () => choose(b, opt.correct, item));
+            answers.appendChild(b);
+        });
+    }
+
+    function choose(button, correct, item) {
+        const buttons = el("answers").querySelectorAll("button");
+        buttons.forEach(b => {
+            b.disabled = true;
+            if (b.dataset.correct === "true") b.classList.add("correct");
+        });
+        answered++;
+        if (correct) {
+            score++;
+            el("feedback").textContent = "Correct! " + item.explain;
+            el("feedback").className = "feedback good";
+        } else {
+            button.classList.add("wrong");
+            el("feedback").textContent = "Not quite. " + item.explain;
+            el("feedback").className = "feedback bad";
+        }
+        el("score").textContent = score;
+        el("total").textContent = answered;
+        el("next-btn").disabled = false;
+    }
+
+    el("next-btn").addEventListener("click", () => {
+        if (qIndex < order.length - 1) {
+            qIndex++;
+            showQuestion();
+        } else {
+            const pct = score / order.length;
+            const verdict = pct === 1 ? "Perfect! You bleed black and gold."
+                : pct >= 0.7 ? "Nice work, Tiger fan!"
+                : pct >= 0.4 ? "Not bad. Read the primer and try again."
+                : "Time to brush up on your Mizzou history.";
+            openModal("Trivia complete!", `You scored ${score} out of ${order.length}. ${verdict}`);
+        }
+    });
+
+    // ---------- Word Search ----------
+    const WORDS = ["TIGERS", "FAUROT", "COLUMBIA", "ROCKM", "HOMECOMING",
+                   "BORDERWAR", "TOUCHDOWN", "TRUMAN", "DRINKWITZ", "COTTONBOWL"];
+    const LABELS = { ROCKM: "ROCK M", BORDERWAR: "BORDER WAR", COTTONBOWL: "COTTON BOWL" };
+    const SIZE = 12;
+    const DIRS = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];
+
+    let grid = [], found = new Set(), cells = [];
+    let selecting = false, startCell = null, currentPath = [];
+
+    function buildPuzzle() {
+        // Retry until every word fits
+        for (let attempt = 0; attempt < 50; attempt++) {
+            grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(""));
+            const sorted = WORDS.slice().sort((a, b) => b.length - a.length);
+            if (sorted.every(placeWord)) break;
+        }
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        for (let r = 0; r < SIZE; r++)
+            for (let c = 0; c < SIZE; c++)
+                if (!grid[r][c]) grid[r][c] = letters[Math.floor(Math.random() * 26)];
+    }
+
+    function placeWord(word) {
+        for (let tries = 0; tries < 300; tries++) {
+            const [dr, dc] = DIRS[Math.floor(Math.random() * DIRS.length)];
+            const r = Math.floor(Math.random() * SIZE);
+            const c = Math.floor(Math.random() * SIZE);
+            const endR = r + dr * (word.length - 1), endC = c + dc * (word.length - 1);
+            if (endR < 0 || endR >= SIZE || endC < 0 || endC >= SIZE) continue;
+            let ok = true;
+            for (let i = 0; i < word.length; i++) {
+                const ch = grid[r + dr * i][c + dc * i];
+                if (ch && ch !== word[i]) { ok = false; break; }
+            }
+            if (!ok) continue;
+            for (let i = 0; i < word.length; i++) grid[r + dr * i][c + dc * i] = word[i];
+            return true;
+        }
+        return false;
+    }
+
+    function renderPuzzle() {
+        const g = el("grid");
+        g.innerHTML = "";
+        g.style.gridTemplateColumns = `repeat(${SIZE}, auto)`;
+        cells = [];
+        for (let r = 0; r < SIZE; r++) {
+            cells[r] = [];
+            for (let c = 0; c < SIZE; c++) {
+                const d = document.createElement("div");
+                d.className = "cell";
+                d.textContent = grid[r][c];
+                d.dataset.r = r;
+                d.dataset.c = c;
+                g.appendChild(d);
+                cells[r][c] = d;
+            }
+        }
+        const bank = el("word-bank");
+        bank.innerHTML = "";
+        WORDS.forEach(w => {
+            const s = document.createElement("span");
+            s.className = "word-item";
+            s.id = "word-" + w;
+            s.textContent = LABELS[w] || w;
+            bank.appendChild(s);
+        });
+        el("words-total").textContent = WORDS.length;
+        el("words-found").textContent = 0;
+        el("ws-message").textContent = "";
+    }
+
+    function newPuzzle() {
+        found = new Set();
+        buildPuzzle();
+        renderPuzzle();
+    }
+
+    function cellFromPoint(x, y) {
+        const t = document.elementFromPoint(x, y);
+        return t && t.classList.contains("cell") ? t : null;
+    }
+
+    // Straight line (row, column or diagonal) from start to the hovered cell
+    function lineTo(endEl) {
+        const r0 = +startCell.dataset.r, c0 = +startCell.dataset.c;
+        const r1 = +endEl.dataset.r, c1 = +endEl.dataset.c;
+        const dr = r1 - r0, dc = c1 - c0;
+        if (dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) return null;
+        const steps = Math.max(Math.abs(dr), Math.abs(dc));
+        const sr = Math.sign(dr), sc = Math.sign(dc);
+        const path = [];
+        for (let i = 0; i <= steps; i++) path.push(cells[r0 + sr * i][c0 + sc * i]);
+        return path;
+    }
+
+    function paint(path) {
+        currentPath.forEach(c => c.classList.remove("selecting"));
+        currentPath = path;
+        currentPath.forEach(c => c.classList.add("selecting"));
+    }
+
+    const grid_el = el("grid");
+
+    grid_el.addEventListener("pointerdown", e => {
+        const cell = cellFromPoint(e.clientX, e.clientY);
+        if (!cell) return;
+        e.preventDefault();
+        selecting = true;
+        startCell = cell;
+        paint([cell]);
+    });
+
+    window.addEventListener("pointermove", e => {
+        if (!selecting) return;
+        const cell = cellFromPoint(e.clientX, e.clientY);
+        if (!cell) return;
+        const path = lineTo(cell);
+        if (path) paint(path);
+    });
+
+    window.addEventListener("pointerup", () => {
+        if (!selecting) return;
+        selecting = false;
+        const word = currentPath.map(c => c.textContent).join("");
+        const reversed = word.split("").reverse().join("");
+        const match = WORDS.find(w => !found.has(w) && (w === word || w === reversed));
+        if (match) {
+            found.add(match);
+            currentPath.forEach(c => c.classList.add("found-cell"));
+            el("word-" + match).classList.add("found");
+            el("words-found").textContent = found.size;
+            el("ws-message").textContent = `Found ${LABELS[match] || match}!`;
+            if (found.size === WORDS.length) {
+                el("ws-message").textContent = "You found every word!";
+                openModal("Word search complete!", "You found all " + WORDS.length + " hidden words. M-I-Z!");
+            }
+        }
+        paint([]);
+    });
+
+    el("new-puzzle").addEventListener("click", newPuzzle);
+
+    // ---------- Modal ----------
+    function openModal(title, text) {
+        el("modal-title").textContent = title;
+        el("modal-text").textContent = text;
+        el("modal").classList.add("active");
+    }
+    el("modal-close").addEventListener("click", () => el("modal").classList.remove("active"));
+    el("modal-restart").addEventListener("click", () => {
+        el("modal").classList.remove("active");
+        startTrivia();
+        newPuzzle();
+    });
+
+    startTrivia();
+    newPuzzle();
+</script>
+</body>
+</html>

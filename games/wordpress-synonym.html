@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WordPress — The Newsroom Synonym Challenge</title>
+<style>
+  :root {
+    --ink:#18233b; --muted:#66718a; --paper:#fffdf7; --cream:#f5f0e4;
+    --blue:#2457a6; --blue2:#dce9ff; --gold:#f3c969; --green:#24734f;
+    --red:#a83d45; --line:#e5dfd2;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; color:var(--ink);
+    background:radial-gradient(circle at 12% 10%,#e5edff 0,transparent 28%),
+               radial-gradient(circle at 90% 80%,#fbe9bf 0,transparent 26%),var(--cream);
+    font-family:Georgia,"Times New Roman",serif;
+  }
+  .page { width:min(920px,calc(100% - 28px)); margin:28px auto 48px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+  .brand { display:flex; align-items:center; gap:11px; }
+  .brand-mark { width:45px;height:45px;border-radius:12px;background:var(--ink);color:white;display:grid;place-items:center;font:bold 25px Georgia;box-shadow:4px 4px 0 var(--gold); }
+  .eyebrow { font:800 11px Arial,sans-serif; letter-spacing:2px; color:var(--blue); text-transform:uppercase; }
+  h1 { font-size:clamp(25px,4vw,38px); margin:2px 0 0; letter-spacing:-1px; }
+  .edition { font:700 11px Arial,sans-serif; color:var(--muted); text-align:right; letter-spacing:1px; text-transform:uppercase; }
+  .desk { background:var(--paper); border:1px solid var(--line); border-radius:22px; overflow:hidden; box-shadow:0 18px 55px #29344b18; }
+  .ticker { background:var(--ink);color:#fff; padding:10px 20px;display:flex;justify-content:space-between;gap:10px;font:700 11px Arial,sans-serif;letter-spacing:1.2px;text-transform:uppercase; }
+  .ticker span:last-child { color:var(--gold); }
+  .content { padding:clamp(20px,5vw,42px); }
+  .intro { display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:24px; }
+  .intro p { color:var(--muted);line-height:1.55;margin:8px 0 0;max-width:570px;font:15px/1.6 Arial,sans-serif; }
+  .stamp { flex:none;border:2px solid var(--gold);color:#886315;transform:rotate(5deg);padding:8px 10px;font:900 10px Arial,sans-serif;letter-spacing:1px;text-align:center;border-radius:5px; }
+  .stats { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0 25px; }
+  .stat { background:#f6f4ed;border:1px solid var(--line);border-radius:12px;padding:12px 14px; }
+  .stat small { display:block;color:var(--muted);font:700 10px Arial,sans-serif;text-transform:uppercase;letter-spacing:1px; }
+  .stat strong { display:block;font:bold 23px Arial,sans-serif;margin-top:5px; }
+  .progress-wrap { margin:0 0 25px; }
+  .progress-label { display:flex;justify-content:space-between;font:700 11px Arial,sans-serif;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.7px; }
+  .track { height:9px;background:#e9e5dc;border-radius:20px;overflow:hidden; }
+  .bar { height:100%;width:0;background:linear-gradient(90deg,var(--blue),#68a0ed);border-radius:20px;transition:width .35s ease; }
+  .question-card { border:1px solid var(--line);border-radius:16px;padding:clamp(18px,4vw,28px);background:white; }
+  .qtop { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px; }
+  .level { background:var(--blue2);color:var(--blue);border-radius:30px;padding:7px 11px;font:800 10px Arial,sans-serif;letter-spacing:1px;text-transform:uppercase; }
+  .qnumber { color:var(--muted);font:700 12px Arial,sans-serif; }
+  .prompt { font:700 clamp(19px,3vw,25px)/1.35 Arial,sans-serif;margin:0 0 10px; }
+  .context { color:var(--muted);font:14px/1.55 Arial,sans-serif;margin:0 0 20px; }
+  .blank { color:var(--blue);border-bottom:2px solid var(--gold);white-space:nowrap; }
+  label { display:block;font:700 12px Arial,sans-serif;color:var(--muted);margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase; }
+  input { width:100%;padding:14px 15px;border:2px solid #d9dce4;border-radius:10px;font:16px Arial,sans-serif;outline:none;transition:border .2s; }
+  input:focus { border-color:var(--blue);box-shadow:0 0 0 3px #2457a61a; }
+  .actions { display:flex;align-items:center;gap:10px;margin-top:15px;flex-wrap:wrap; }
+  button { border:0;border-radius:10px;padding:13px 19px;font:800 13px Arial,sans-serif;cursor:pointer;transition:transform .15s,opacity .15s; }
+  button:hover { transform:translateY(-1px); }
+  button:disabled { opacity:.45;cursor:not-allowed;transform:none; }
+  .primary { background:var(--blue);color:white; }
+  .secondary { background:#eeece5;color:var(--ink); }
+  .feedback { min-height:28px;margin-top:14px;font:700 14px/1.4 Arial,sans-serif; }
+  .feedback.good { color:var(--green); }
+  .feedback.try { color:var(--red); }
+  .hint { color:var(--muted);font:12px Arial,sans-serif;margin-left:auto; }
+  .checkpoint { display:none;text-align:center;padding:28px 16px 16px; }
+  .checkpoint.show { display:block; }
+  .trophy { font-size:48px; }
+  .checkpoint h2 { font-size:30px;margin:10px 0 8px; }
+  .checkpoint p { color:var(--muted);font:15px/1.6 Arial,sans-serif;max-width:510px;margin:0 auto 18px; }
+  .checkpoint .scoreline { display:inline-block;background:#fff5d9;border:1px solid #f0d58e;border-radius:12px;padding:12px 18px;margin:0 0 20px;font:800 14px Arial,sans-serif; }
+  .footer { text-align:center;color:var(--muted);font:11px Arial,sans-serif;margin-top:17px; }
+  @media(max-width:560px){ header{align-items:flex-start}.edition{display:none}.intro{display:block}.stamp{display:inline-block;margin-top:15px}.stats{gap:7px}.stat{padding:10px}.stat strong{font-size:19px}.hint{width:100%;margin:2px 0 0} }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="brand"><div class="brand-mark">W</div><div><div class="eyebrow">The Student Press • Word Desk</div><h1>WordPress</h1></div></div>
+    <div class="edition">Special edition<br>Vocabulary challenge</div>
+  </header>
+  <main class="desk">
+    <div class="ticker"><span>● Newsroom training in progress</span><span>Build your word power</span></div>
+    <div class="content">
+      <section class="intro">
+        <div><div class="eyebrow">The assignment</div>
+          <p>Every strong journalist needs the right word. Rewrite each sentence by filling in the blank with a synonym. Start with newsroom basics, then work your way up to sharper, more precise language. Complete three questions to earn a checkpoint!</p>
+        </div>
+        <div class="stamp">COPY<br>DESK<br>APPROVED</div>
+      </section>
+      <div class="stats">
+        <div class="stat"><small>Points</small><strong id="score">0</strong></div>
+        <div class="stat"><small>Checkpoint</small><strong id="checkpointCount">0 / 3</strong></div>
+        <div class="stat"><small>Streak</small><strong id="streak">0 ✦</strong></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Assignment progress</span><span id="progressText">0 of 9</span></div>
+        <div class="track"><div class="bar" id="progressBar"></div></div>
+      </div>
+
+      <section class="question-card" id="questionCard">
+        <div class="qtop"><span class="level" id="level">Level 1 · Warm-up</span><span class="qnumber" id="qnumber">Question 1 of 9</span></div>
+        <p class="prompt" id="prompt"></p>
+        <p class="context" id="context"></p>
+        <label for="answer">Your synonym</label>
+        <input id="answer" type="text" autocomplete="off" placeholder="Type one word, then submit..." />
+        <div class="actions"><button class="primary" id="submit">Submit answer</button><button class="secondary" id="hintBtn">Get a hint</button><span class="hint">Spelling counts — give it your best shot!</span></div>
+        <div class="feedback" id="feedback" aria-live="polite"></div>
+      </section>
+
+      <section class="checkpoint" id="checkpoint" aria-live="polite">
+        <div class="trophy" id="trophy">🏆</div>
+        <div class="eyebrow" id="checkpointEyebrow">Checkpoint cleared</div>
+        <h2 id="checkpointTitle">Great reporting!</h2>
+        <p id="checkpointMessage"></p>
+        <div class="scoreline" id="checkpointScore"></div><br>
+        <button class="primary" id="continueBtn">Back to the newsroom →</button>
+      </section>
+      <div class="footer">A practice game for curious reporters. Synonyms can vary by context — choose the word that best fits the sentence.</div>
+    </div>
+  </main>
+</div>
+<script>
+const questions = [
+  {level:"Level 1 · Warm-up", word:"big", answer:["large"], hint:"Think of the opposite of small.", prompt:'The city announced a <span class="blank">_____</span> change to its public transit schedule.', context:"Swap the everyday word “big” for a simple, clear synonym.", points:10},
+  {level:"Level 1 · Warm-up", word:"said", answer:["stated","remarked"], hint:"A reporter might write: “The mayor ___ that the project is on schedule.”", prompt:'“We are ready to begin,” the mayor <span class="blank">_____</span> during the press conference.', context:"Choose a more specific alternative to “said.”", points:10},
+  {level:"Level 1 · Warm-up", word:"help", answer:["assist","aid"], hint:"A formal verb meaning to give support.", prompt:'Volunteers will <span class="blank">_____</span> residents affected by the storm.', context:"Replace “help” with a concise newsroom-friendly verb.", points:10},
+
+  {level:"Level 2 · Newsroom builder", word:"show", answer:["reveal","demonstrate","illustrate"], hint:"The new data may ___ what changed over time.", prompt:'The latest figures <span class="blank">_____</span> a steady increase in library visits.', context:"Choose a stronger verb than “show” for a data-focused sentence.", points:15},
+  {level:"Level 2 · Newsroom builder", word:"important", answer:["significant","essential","major"], hint:"A word often used to describe something meaningful or consequential.", prompt:'The council vote marks a <span class="blank">_____</span> moment for the neighborhood.', context:"Replace “important” with a more precise adjective.", points:15},
+  {level:"Level 2 · Newsroom builder", word:"change", answer:["shift","adjustment","transformation"], hint:"A short word meaning a movement in direction or approach.", prompt:'The school district announced a <span class="blank">_____</span> in its attendance policy.', context:"Find a synonym that fits a policy or public-affairs story.", points:15},
+
+  {level:"Level 3 · Copy desk pro", word:"prove", answer:["demonstrate","establish","confirm"], hint:"Evidence can ___ that a claim is accurate. Avoid overstating what evidence shows.", prompt:'The records help <span class="blank">_____</span> when the contract was approved.', context:"Choose a careful, evidence-based alternative to “prove.”", points:20},
+  {level:"Level 3 · Copy desk pro", word:"problem", answer:["issue","challenge","concern"], hint:"A common word in public-policy reporting: “the central ___.”", prompt:'Residents say traffic safety remains a major <span class="blank">_____</span> near the school.', context:"Replace “problem” with a measured word suitable for a news story.", points:20},
+  {level:"Level 3 · Copy desk pro", word:"clear", answer:["evident","apparent","obvious"], hint:"If something is easy to see or understand, it is ___.", prompt:'After reviewing the budget, it became <span class="blank">_____</span> that costs had increased.', context:"Choose a more polished adjective for explanatory reporting.", points:20}
+];
+
+let index=0, score=0, streak=0, checkpoint=0, locked=false, hintUsed=false;
+const $ = id => document.getElementById(id);
+function normalize(s){return s.trim().toLowerCase().replace(/[.,!?;:'"]/g,"").replace(/\s+/g," ");}
+function render(){
+  const q=questions[index];
+  $("level").textContent=q.level;
+  $("qnumber").textContent=`Question ${index+1} of ${questions.length}`;
+  $("prompt").innerHTML=q.prompt;
+  $("context").textContent=`Original word: “${q.word}.” ${q.context}`;
+  $("answer").value="";
+  $("answer").disabled=false;
+  $("submit").disabled=false;
+  $("hintBtn").disabled=false;
+  $("feedback").textContent="";
+  $("feedback").className="feedback";
+  $("progressText").textContent=`${index} of ${questions.length}`;
+  $("progressBar").style.width=`${(index/questions.length)*100}%`;
+  $("score").textContent=score;
+  $("checkpointCount").textContent=`${checkpoint} / 3`;
+  $("streak").textContent=`${streak} ✦`;
+  hintUsed=false; locked=false;
+  $("questionCard").style.display="block";
+  $("checkpoint").classList.remove("show");
+  $("answer").focus();
+}
+function submit(){
+  if(locked) return;
+  const q=questions[index], value=normalize($("answer").value);
+  if(!value){$("feedback").textContent="Type a synonym before submitting."; $("feedback").className="feedback try";return;}
+  if(q.answer.includes(value)){
+    locked=true; streak++; score+=hintUsed?Math.round(q.points/2):q.points;
+    $("feedback").textContent=`✓ Nice work! “${value}” fits the sentence. +${hintUsed?Math.round(q.points/2):q.points} points.`;
+    $("feedback").className="feedback good";
+    $("answer").disabled=true;$("submit").disabled=true;$("hintBtn").disabled=true;
+    $("score").textContent=score;$("streak").textContent=`${streak} ✦`;
+    $("submit").textContent=index===questions.length-1?"Finish challenge":"Next question →";
+    $("submit").onclick=next;
+  } else {
+    streak=0;$("streak").textContent=`${streak} ✦`;
+    $("feedback").textContent="Not quite. Try another synonym — you’ve got this!";
+    $("feedback").className="feedback try";
+  }
+}
+function next(){
+  $("submit").onclick=submit;$("submit").textContent="Submit answer";
+  index++;
+  if(index===questions.length){showFinal();return;}
+  if(index%3===0){showCheckpoint();return;}
+  render();
+}
+function showCheckpoint(){
+  checkpoint++;
+  $("questionCard").style.display="none";
+  $("checkpoint").classList.add("show");
+  $("trophy").textContent=checkpoint===1?"🌟":checkpoint===2?"📰":"🏆";
+  $("checkpointEyebrow").textContent=`Checkpoint ${checkpoint} cleared`;
+  $("checkpointTitle").textContent=checkpoint===1?"You’re off to a great start!":checkpoint===2?"Your reporting vocabulary is growing!":"Copy desk champion!";
+  $("checkpointMessage").textContent=checkpoint===1?"You’ve completed your warm-up. Keep building your word bank — the next set brings more newsroom-ready vocabulary.":checkpoint===2?"You’ve made it through the builder round. You’re choosing more precise words and making your sentences stronger. One final round to go!":"You completed all three rounds. Your next assignment: keep noticing how professional journalists choose precise words.";
+  $("checkpointScore").textContent=`Checkpoint ${checkpoint} complete · ${score} points earned so far`;
+  $("checkpointCount").textContent=`${checkpoint} / 3`;
+  $("progressText").textContent=`${index} of ${questions.length}`;
+  $("progressBar").style.width=`${(index/questions.length)*100}%`;
+  $("continueBtn").textContent="Continue to next round →";
+}
+function showFinal(){
+  $("questionCard").style.display="none";$("checkpoint").classList.add("show");
+  $("trophy").textContent="🎉";$("checkpointEyebrow").textContent="Assignment filed";
+  $("checkpointTitle").textContent="You made the front page!";
+  $("checkpointMessage").textContent="You finished all nine synonym challenges. Keep practicing by replacing vague words with precise ones — and remember that the best synonym always depends on context.";
+  $("checkpointScore").textContent=`Final score: ${score} points · 9 questions completed`;
+  $("continueBtn").textContent="Play again ↻";
+  $("continueBtn").onclick=restart;
+  $("progressText").textContent=`${questions.length} of ${questions.length}`;
+  $("progressBar").style.width="100%";
+}
+function restart(){index=0;score=0;streak=0;checkpoint=0;$("continueBtn").onclick=afterCheckpoint;render();}
+function afterCheckpoint(){$("continueBtn").onclick=afterCheckpoint;$("submit").onclick=submit;render();}
+$("submit").onclick=submit;
+$("answer").addEventListener("keydown",e=>{if(e.key==="Enter")submit();});
+$("hintBtn").addEventListener("click",()=>{if(locked)return;hintUsed=true;$("feedback").textContent="Hint: "+questions[index].hint+" (Using a hint earns half points.)";$("feedback").className="feedback";$("hintBtn").disabled=true;});
+$("continueBtn").addEventListener("click",afterCheckpoint);
+render();
+</script>
+</body>
+</html>

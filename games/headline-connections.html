@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Columbia Missourian Headline Connections</title>
+  <style>
+    :root {
+      --bg-color: #f4f4f5;
+      --card-bg: #ffffff;
+      --text-color: #18181b;
+      --text-muted: #71717a;
+      --border-color: #e4e4e7;
+      --tile-bg: #e4e4e7;
+      --tile-hover: #d4d4d8;
+      --tile-selected: #52525b;
+      --tile-selected-text: #ffffff;
+      
+      --color-green: #a6e3a1;
+      --color-green-text: #1b4b19;
+      --color-yellow: #f9e2af;
+      --color-yellow-text: #5c4308;
+      --color-blue: #89b4fa;
+      --color-blue-text: #1e3a8a;
+      --color-red: #f38ba8;
+      --color-red-text: #6b1124;
+      
+      --btn-bg: #18181b;
+      --btn-text: #ffffff;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #18181b;
+      --card-bg: #27272a;
+      --text-color: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --border-color: #3f3f46;
+      --tile-bg: #3f3f46;
+      --tile-hover: #52525b;
+      --tile-selected: #a1a1aa;
+      --tile-selected-text: #18181b;
+      
+      --color-green: #2d5a27;
+      --color-green-text: #e2f7e0;
+      --color-yellow: #6e5210;
+      --color-yellow-text: #fef08a;
+      --color-blue: #1e3a8a;
+      --color-blue-text: #dbeafe;
+      --color-red: #7f1d1d;
+      --color-red-text: #fee2e2;
+      
+      --btn-bg: #f4f4f5;
+      --btn-text: #18181b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    header {
+      width: 100%;
+      max-width: 650px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .sub-brand {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .controls-top {
+      display: flex;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--tile-hover);
+    }
+
+    .game-status {
+      width: 100%;
+      max-width: 650px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .lives-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--text-color);
+      transition: opacity 0.3s;
+    }
+
+    .dot.lost {
+      opacity: 0.2;
+    }
+
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--btn-bg);
+      color: var(--btn-text);
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-5px);
+    }
+
+    .grid {
+      width: 100%;
+      max-width: 650px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tile {
+      aspect-ratio: 1.25;
+      background-color: var(--tile-bg);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.1s, background-color 0.2s;
+      line-height: 1.2;
+      text-transform: uppercase;
+      word-break: break-word;
+    }
+
+    .tile:hover {
+      background-color: var(--tile-hover);
+    }
+
+    .tile.selected {
+      background-color: var(--tile-selected);
+      color: var(--tile-selected-text);
+    }
+
+    .solved-category {
+      grid-column: span 4;
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      animation: popIn 0.3s ease-out;
+    }
+
+    .solved-category.green { background-color: var(--color-green); color: var(--color-green-text); }
+    .solved-category.yellow { background-color: var(--color-yellow); color: var(--color-yellow-text); }
+    .solved-category.blue { background-color: var(--color-blue); color: var(--color-blue-text); }
+    .solved-category.red { background-color: var(--color-red); color: var(--color-red-text); }
+
+    .solved-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .solved-headline {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover:not(:disabled) {
+      background-color: var(--tile-hover);
+    }
+
+    .btn-submit {
+      background-color: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background-color: var(--card-bg);
+      width: 90%;
+      max-width: 480px;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .modal h2 {
+      margin-bottom: 10px;
+      font-size: 1.4rem;
+    }
+
+    .modal p {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .shake {
+      animation: shake 0.4s ease-in-out;
+    }
+
+    @media (max-width: 480px) {
+      .tile {
+        font-size: 0.7rem;
+        padding: 4px;
+      }
+      .btn {
+        padding: 10px 14px;
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>Headline Connections</h1>
+      <span class="sub-brand">Columbia Missourian Edition</span>
+    </div>
+    <div class="controls-top">
+      <button class="icon-btn" id="theme-toggle">🌙</button>
+    </div>
+  </header>
+
+  <div class="game-status">
+    <div id="round-indicator">Round 1 of 3</div>
+    <div class="lives-container">
+      <span>Mistakes remaining:</span>
+      <div id="lives-dots" style="display: flex; gap: 4px;">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">One off!</div>
+
+  <div id="grid" class="grid"></div>
+
+  <div class="action-bar" id="action-bar">
+    <button id="btn-shuffle" class="btn">Shuffle</button>
+    <button id="btn-deselect" class="btn">Deselect All</button>
+    <button id="btn-submit" class="btn btn-submit" disabled>Submit</button>
+  </div>
+
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+      <h2 id="modal-title">Round Complete!</h2>
+      <p id="modal-body">Great job deciphering the real Columbia Missourian headlines.</p>
+      <button id="modal-btn" class="btn btn-submit">Next Round</button>
+    </div>
+  </div>
+
+  <script>
+    const roundsData = [
+      {
+        round: 1,
+        categories: [
+          {
+            difficulty: 'green',
+            title: 'City Municipal Affairs',
+            headline: 'City Council approves new master plan for local parks system',
+            parts: ['City Council', 'approves new', 'master plan for', 'local parks system']
+          },
+          {
+            difficulty: 'yellow',
+            title: 'Public Education Bond',
+            headline: 'Columbia Public Schools board reviews two hundred million bond strategy',
+            parts: ['Columbia Public Schools', 'board reviews two', 'hundred million', 'bond strategy']
+          },
+          {
+            difficulty: 'blue',
+            title: 'Mizzou Athletics (Volleyball)',
+            headline: 'Mizzou Volleyball takes on Nebraska in landmark match at Wrigley Field',
+            parts: ['Mizzou Volleyball', 'takes on Nebraska', 'in landmark match', 'at Wrigley Field']
+          },
+          {
+            difficulty: 'red',
+            title: 'Environmental & County Restoration',
+            headline: 'Hinkson Creek watershed project receives federal grant for habitat restoration',
+            parts: ['Hinkson Creek', 'watershed project receives', 'federal grant for', 'habitat restoration']
+          }
+        ]
+      },
+      {
+        round: 2,
+        categories: [
+          {
+            difficulty: 'green',
+            title: 'Boone County Governance',
+            headline: 'Boone County Commission approves updated budget for road improvement projects',
+            parts: ['Boone County Commission', 'approves updated budget', 'for road improvement', 'projects']
+          },
+          {
+            difficulty: 'yellow',
+            title: 'Local Commerce & Community',
+            headline: 'Columbia Farmers Market expands winter operations to accommodate growing vendor demand',
+            parts: ['Columbia Farmers Market', 'expands winter operations', 'to accommodate growing', 'vendor demand']
+          },
+          {
+            difficulty: 'blue',
+            title: 'Mizzou Football Beat',
+            headline: 'Mizzou Football secures crucial conference victory in dramatic fourth quarter finish',
+            parts: ['Mizzou Football', 'secures crucial conference', 'victory in dramatic', 'fourth quarter finish']
+          },
+          {
+            difficulty: 'red',
+            title: 'City Planning & Infrastructure',
+            headline: 'Downtown Columbia parking garage project delayed following environmental review findings',
+            parts: ['Downtown Columbia parking', 'garage project delayed', 'following environmental', 'review findings']
+          }
+        ]
+      },
+      {
+        round: 3,
+        categories: [
+          {
+            difficulty: 'green',
+            title: 'Columbia High School STEM',
+            headline: 'Rock Bridge High School robotics team advances to national championship competition',
+            parts: ['Rock Bridge High', 'School robotics team', 'advances to national', 'championship competition']
+          },
+          {
+            difficulty: 'yellow',
+            title: 'MU Agriculture Research',
+            headline: 'University of Missouri research team receives major federal grant for agriculture study',
+            parts: ['University of Missouri', 'research team receives', 'major federal grant', 'for agriculture study']
+          },
+          {
+            difficulty: 'blue',
+            title: 'Regional Aviation News',
+            headline: 'Columbia Regional Airport announces additional daily flights to major regional hubs',
+            parts: ['Columbia Regional Airport', 'announces additional daily', 'flights to major', 'regional hubs']
+          },
+          {
+            difficulty: 'red',
+            title: 'Emergency & Safety Services',
+            headline: 'Boone County Fire Protection District opens new station to improve emergency response',
+            parts: ['Boone County Fire', 'Protection District opens', 'new station to', 'improve emergency response']
+          }
+        ]
+      }
+    ];
+
+    let currentRoundIdx = 0;
+    let lives = 3;
+    let selectedTiles = [];
+    let solvedCategories = [];
+    let currentTiles = [];
+
+    const gridEl = document.getElementById('grid');
+    const actionBarEl = document.getElementById('action-bar');
+    const submitBtn = document.getElementById('btn-submit');
+    const deselectBtn = document.getElementById('btn-deselect');
+    const shuffleBtn = document.getElementById('btn-shuffle');
+    const toastEl = document.getElementById('toast');
+    const roundIndicatorEl = document.getElementById('round-indicator');
+    const livesDotsEl = document.getElementById('lives-dots');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const modalOverlayEl = document.getElementById('modal-overlay');
+    const modalTitleEl = document.getElementById('modal-title');
+    const modalBodyEl = document.getElementById('modal-body');
+    const modalBtnEl = document.getElementById('modal-btn');
+
+    function initRound(roundIdx) {
+      currentRoundIdx = roundIdx;
+      lives = 3;
+      selectedTiles = [];
+      solvedCategories = [];
+      
+      roundIndicatorEl.textContent = `Round ${currentRoundIdx + 1} of ${roundsData.length}`;
+      updateLivesUI();
+      
+      // Restore standard action bar
+      actionBarEl.innerHTML = `
+        <button id="btn-shuffle" class="btn">Shuffle</button>
+        <button id="btn-deselect" class="btn">Deselect All</button>
+        <button id="btn-submit" class="btn btn-submit" disabled>Submit</button>
+      `;
+
+      document.getElementById('btn-deselect').addEventListener('click', () => {
+        if (lives <= 0) return;
+        selectedTiles = [];
+        renderGrid();
+      });
+
+      document.getElementById('btn-shuffle').addEventListener('click', () => {
+        if (lives <= 0) return;
+        currentTiles = shuffleArray(currentTiles);
+        renderGrid();
+      });
+
+      document.getElementById('btn-submit').addEventListener('click', handleSubmit);
+
+      const categories = roundsData[currentRoundIdx].categories;
+      let tiles = [];
+
+      categories.forEach((cat, cIdx) => {
+        cat.parts.forEach((partText, pIdx) => {
+          tiles.push({
+            id: `r${roundIdx}-c${cIdx}-p${pIdx}`,
+            categoryId: cIdx,
+            text: partText
+          });
+        });
+      });
+
+      currentTiles = shuffleArray(tiles);
+      renderGrid();
+    }
+
+    function shuffleArray(arr) {
+      const array = [...arr];
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function updateLivesUI() {
+      const dots = livesDotsEl.querySelectorAll('.dot');
+      dots.forEach((dot, idx) => {
+        if (idx < lives) {
+          dot.classList.remove('lost');
+        } else {
+          dot.classList.add('lost');
+        }
+      });
+    }
+
+    function renderGrid() {
+      gridEl.innerHTML = '';
+
+      solvedCategories.forEach(cat => {
+        const catEl = document.createElement('div');
+        catEl.className = `solved-category ${cat.difficulty}`;
+        catEl.innerHTML = `
+          <div class="solved-title">${cat.title}</div>
+          <div class="solved-headline">"${cat.headline}"</div>
+        `;
+        gridEl.appendChild(catEl);
+      });
+
+      currentTiles.forEach(tile => {
+        const tileEl = document.createElement('div');
+        tileEl.className = 'tile';
+        if (selectedTiles.some(t => t.id === tile.id)) {
+          tileEl.classList.add('selected');
+        }
+        tileEl.textContent = tile.text;
+        tileEl.addEventListener('click', () => handleTileClick(tile));
+        gridEl.appendChild(tileEl);
+      });
+
+      const submitBtnEl = document.getElementById('btn-submit');
+      if (submitBtnEl && lives > 0) {
+        submitBtnEl.disabled = selectedTiles.length !== 4;
+      }
+    }
+
+    function handleTileClick(tile) {
+      if (lives <= 0) return;
+      const idx = selectedTiles.findIndex(t => t.id === tile.id);
+      if (idx > -1) {
+        selectedTiles.splice(idx, 1);
+      } else {
+        if (selectedTiles.length < 4) {
+          selectedTiles.push(tile);
+        }
+      }
+      renderGrid();
+    }
+
+    function handleSubmit() {
+      if (selectedTiles.length !== 4 || lives <= 0) return;
+
+      const firstCatId = selectedTiles[0].categoryId;
+      const allMatch = selectedTiles.every(t => t.categoryId === firstCatId);
+
+      if (allMatch) {
+        const category = roundsData[currentRoundIdx].categories[firstCatId];
+        solvedCategories.push(category);
+        currentTiles = currentTiles.filter(t => !selectedTiles.some(st => st.id === t.id));
+        selectedTiles = [];
+
+        renderGrid();
+
+        if (solvedCategories.length === 4) {
+          setTimeout(handleRoundWin, 500);
+        }
+      } else {
+        const counts = {};
+        selectedTiles.forEach(t => {
+          counts[t.categoryId] = (counts[t.categoryId] || 0) + 1;
+        });
+
+        const maxCount = Math.max(...Object.values(counts));
+        if (maxCount === 3) {
+          showToast('One off!');
+        }
+
+        lives--;
+        updateLivesUI();
+        gridEl.classList.add('shake');
+        setTimeout(() => gridEl.classList.remove('shake'), 400);
+
+        if (lives === 0) {
+          setTimeout(handleRoundLoss, 600);
+        }
+      }
+    }
+
+    function showToast(msg) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 1500);
+    }
+
+    function handleRoundWin() {
+      if (currentRoundIdx < roundsData.length - 1) {
+        modalTitleEl.textContent = `Round ${currentRoundIdx + 1} Cleared!`;
+        modalBodyEl.textContent = `Excellent job! All lives reset for Round ${currentRoundIdx + 2}.`;
+        modalBtnEl.textContent = `Start Round ${currentRoundIdx + 2}`;
+        modalBtnEl.onclick = () => {
+          modalOverlayEl.classList.remove('show');
+          initRound(currentRoundIdx + 1);
+        };
+      } else {
+        modalTitleEl.textContent = '🎉 You Won the Game!';
+        modalBodyEl.textContent = 'You successfully solved all 3 rounds of Columbia Missourian news headline connections!';
+        modalBtnEl.textContent = 'Play Again';
+        modalBtnEl.onclick = () => {
+          modalOverlayEl.classList.remove('show');
+          initRound(0);
+        };
+      }
+      modalOverlayEl.classList.add('show');
+    }
+
+    function handleRoundLoss() {
+      // Reveal all remaining un-solved headline categories on the grid
+      const allCategories = roundsData[currentRoundIdx].categories;
+      const remainingCategories = allCategories.filter(
+        cat => !solvedCategories.some(sc => sc.title === cat.title)
+      );
+
+      solvedCategories = [...solvedCategories, ...remainingCategories];
+      currentTiles = [];
+      selectedTiles = [];
+      renderGrid();
+
+      // Update action bar to let user view answers unobstructed
+      actionBarEl.innerHTML = `
+        <button id="btn-continue" class="btn btn-submit" style="width: 100%;">View Summary & Continue</button>
+      `;
+
+      document.getElementById('btn-continue').addEventListener('click', () => {
+        modalTitleEl.textContent = 'Game Over';
+        modalBodyEl.textContent = `You ran out of mistakes on Round ${currentRoundIdx + 1}.`;
+        modalBtnEl.textContent = 'Try Again';
+        modalBtnEl.onclick = () => {
+          modalOverlayEl.classList.remove('show');
+          initRound(currentRoundIdx);
+        };
+        modalOverlayEl.classList.add('show');
+      });
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.body.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        document.body.removeAttribute('data-theme');
+        themeToggleBtn.textContent = '🌙';
+      } else {
+        document.body.setAttribute('data-theme', 'dark');
+        themeToggleBtn.textContent = '☀️';
+      }
+    });
+
+    initRound(0);
+  </script>
+</body>
+</html>

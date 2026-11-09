@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Games Arcade</title>
+<style>
+  :root { --bg:#111418; --card:#1c2128; --ink:#f2f2f2; --muted:#a7afba; --gold:#f1b82d; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  header { text-align:center; padding:3rem 1rem 1.5rem; }
+  h1 { margin:0; font-size:clamp(2rem,5vw,3.2rem); letter-spacing:-.02em; }
+  h1 span { color:var(--gold); }
+  header p { color:var(--muted); margin:.6rem auto 0; max-width:40rem; }
+  main { max-width:1100px; margin:0 auto; padding:1rem 1.25rem 3rem;
+         display:grid; gap:1.1rem; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); }
+  a.card { display:flex; flex-direction:column; gap:.4rem; padding:1.3rem; border-radius:14px;
+           background:var(--card); color:inherit; text-decoration:none; border:1px solid #2b323c;
+           transition:transform .15s, border-color .15s; }
+  a.card:hover, a.card:focus-visible { transform:translateY(-3px); border-color:var(--gold); outline:none; }
+  .emoji { font-size:2.2rem; }
+  .title { font-weight:700; font-size:1.15rem; }
+  .desc { color:var(--muted); font-size:.92rem; flex:1; }
+  .credit { font-size:.85rem; color:var(--gold); }
+  .play { margin-top:.5rem; font-weight:600; font-size:.9rem; }
+  footer { text-align:center; color:var(--muted); font-size:.85rem; padding:0 1rem 2rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>HTML Games <span>Arcade</span></h1>
+  <p>Ten browser games, each built in a single HTML file. Pick one to play.</p>
+</header>
+<main>
+  <a class="card" href="games/fence-hopper.html">
+    <div class="emoji">🐈</div><div class="title">Fence Hopper: Cat Escapades</div>
+    <div class="desc">Hop fences and dodge trouble.</div>
+    <div class="credit">Created by Lily Burger</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/midterm-matchup.html">
+    <div class="emoji">🗳️</div><div class="title">Midterm Match-Up</div>
+    <div class="desc">What changed for Boone County?</div>
+    <div class="credit">Created by Emily Early</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/zen-bubbles.html">
+    <div class="emoji">🫧</div><div class="title">Zen Bubbles</div>
+    <div class="desc">A bubble-popping challenge.</div>
+    <div class="credit">Created by Abby Martinez</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/mizzou-trivia.html">
+    <div class="emoji">🏈</div><div class="title">Mizzou Football Trivia &amp; Word Search</div>
+    <div class="desc">Test your Tigers football knowledge.</div>
+    <div class="credit">Created by Hannah Moore</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/wordpress-synonym.html">
+    <div class="emoji">📝</div><div class="title">The Newsroom Synonym Challenge</div>
+    <div class="desc">Find the right word on deadline.</div>
+    <div class="credit">Created by Adela Rakoski</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/mu-basketball.html">
+    <div class="emoji">🏀</div><div class="title">Mizzou Tigers Basketball Showdown</div>
+    <div class="desc">Take the court with the Tigers.</div>
+    <div class="credit">Created by Aaron Segal</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/bye-bye-bias.html">
+    <div class="emoji">📰</div><div class="title">Bye Bye Bias</div>
+    <div class="desc">A newsroom challenge.</div>
+    <div class="credit">Created by Micah Shulman</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/headline-connections.html">
+    <div class="emoji">🔗</div><div class="title">Columbia Missourian Headline Connections</div>
+    <div class="desc">Group the headlines.</div>
+    <div class="credit">Created by Annabelle Wooster</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/race-to-the-white-house.html">
+    <div class="emoji">🏛️</div><div class="title">Race to the White House</div>
+    <div class="desc">Campaign your way to the presidency.</div>
+    <div class="credit">Created by Laiba Zai</div><div class="play">▶ Play</div></a>
+  <a class="card" href="games/rights-runner.html">
+    <div class="emoji">🗽</div><div class="title">Rights Runner</div>
+    <div class="desc">A First Amendment arcade game.</div>
+    <div class="credit">Created by Liz Lucas</div><div class="play">▶ Play</div></a>
+</main>
+<footer>Game credits are listed in <a href="credits.txt" style="color:inherit">credits.txt</a>.</footer>
+</body>
+</html>

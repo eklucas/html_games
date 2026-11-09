@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bubble Pop Challenge</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: linear-gradient(to bottom, #1e1b4b, #312e81, #4338ca);
+        background-attachment: fixed;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: white;
+        user-select: none;
+    }
+
+    #ui {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        pointer-events: none;
+    }
+
+    h1 { margin: 0; font-size: 24px; font-weight: 300; letter-spacing: 2px; }
+    p { margin: 5px 0; font-size: 18px; font-weight: 300; }
+    
+    #lives-container {
+        font-size: 24px;
+        letter-spacing: 4px;
+    }
+
+    .bubble {
+        position: absolute;
+        bottom: -100px;
+        background-color: rgba(255, 255, 255, 0.25);
+        border: 1.5px solid rgba(255, 255, 255, 0.6);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .bubble:hover {
+        background-color: rgba(255, 255, 255, 0.45);
+    }
+
+    .popped {
+        opacity: 0 !important;
+        transform: scale(1.6);
+        pointer-events: none;
+    }
+
+    /* Game Over Modal */
+    #game-over-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.85);
+        z-index: 100;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(5px);
+    }
+
+    #game-over-modal h2 {
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+
+    #restart-btn {
+        margin-top: 20px;
+        padding: 12px 28px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        background-color: #6366f1;
+        color: white;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.2s;
+    }
+
+    #restart-btn:hover {
+        background-color: #4f46e5;
+    }
+</style>
+</head>
+<body>
+
+<div id="ui">
+    <div>
+        <h1>Bubble Pop</h1>
+        <p>Score: <span id="score">0</span></p>
+    </div>
+    <div id="lives-container">
+        Lives: <span id="lives">❤️❤️❤️</span>
+    </div>
+</div>
+
+<div id="game-over-modal">
+    <h2>Game Over!</h2>
+    <p>Final Score: <span id="final-score">0</span></p>
+    <button id="restart-btn" onclick="restartGame()">Play Again</button>
+</div>
+
+<script>
+    let score = 0;
+    let lives = 3;
+    let gameActive = true;
+    let spawnInterval = null;
+
+    const scoreElement = document.getElementById('score');
+    const livesElement = document.getElementById('lives');
+    const gameOverModal = document.getElementById('game-over-modal');
+    const finalScoreElement = document.getElementById('final-score');
+
+    function updateLivesDisplay() {
+        let hearts = '';
+        for (let i = 0; i < lives; i++) hearts += '❤️';
+        for (let i = lives; i < 3; i++) hearts += '🖤';
+        livesElement.innerText = hearts;
+    }
+
+    function createBubble() {
+        if (!gameActive) return;
+
+        const bubble = document.createElement('div');
+        bubble.classList.add('bubble');
+        
+        const size = Math.floor(Math.random() * 50) + 45;
+        bubble.style.width = `${size}px`;
+        bubble.style.height = `${size}px`;
+        
+        const startLeft = Math.random() * (window.innerWidth - size);
+        bubble.style.left = `${startLeft}px`;
+        
+        // Speed up slightly as score increases
+        const baseDuration = Math.max(3500, 7000 - (score * 100));
+        const duration = Math.random() * 2000 + baseDuration; 
+        
+        document.body.appendChild(bubble);
+        
+        let startTime = null;
+        const startY = window.innerHeight;
+        const endY = -size - 50;
+        const wobbleSpeed = Math.random() * 2 + 1;
+        const wobbleWidth = Math.random() * 30 + 10;
+        let popped = false;
+
+        function animateBubble(timestamp) {
+            if (!gameActive) {
+                if (document.body.contains(bubble)) document.body.removeChild(bubble);
+                return;
+            }
+
+            if (!startTime) startTime = timestamp;
+            const progress = (timestamp - startTime) / duration;
+            
+            if (progress < 1) {
+                const currentY = startY - (startY - endY) * progress;
+                const wobble = Math.sin(progress * Math.PI * wobbleSpeed) * wobbleWidth;
+                bubble.style.transform = `translate(${wobble}px, ${currentY - startY}px)`;
+                
+                if (!popped) {
+                    requestAnimationFrame(animateBubble);
+                }
+            } else {
+                // Bubble reached top unpopped -> Lose a life
+                if (document.body.contains(bubble) && !popped) {
+                    document.body.removeChild(bubble);
+                    loseLife();
+                }
+            }
+        }
+        
+        requestAnimationFrame(animateBubble);
+        
+        bubble.addEventListener('mousedown', () => {
+            if (!popped && gameActive) {
+                popped = true;
+                bubble.classList.add('popped');
+                score += 10;
+                scoreElement.innerText = score;
+                setTimeout(() => {
+                    if (document.body.contains(bubble)) {
+                        document.body.removeChild(bubble);
+                    }
+                }, 300); 
+            }
+        });
+    }
+
+    function loseLife() {
+        if (!gameActive) return;
+
+        lives--;
+        updateLivesDisplay();
+
+        // Flash background red briefly to signal missed bubble
+        document.body.style.backgroundColor = '#7f1d1d';
+        setTimeout(() => {
+            document.body.style.backgroundColor = '';
+        }, 200);
+
+        if (lives <= 0) {
+            endGame();
+        }
+    }
+
+    function endGame() {
+        gameActive = false;
+        clearInterval(spawnInterval);
+        finalScoreElement.innerText = score;
+        gameOverModal.style.display = 'flex';
+    }
+
+    function restartGame() {
+        score = 0;
+        lives = 3;
+        gameActive = true;
+        scoreElement.innerText = '0';
+        updateLivesDisplay();
+        gameOverModal.style.display = 'none';
+
+        // Clear existing bubbles
+        document.querySelectorAll('.bubble').forEach(b => b.remove());
+
+        // Restart spawner
+        startSpawning();
+    }
+
+    function startSpawning() {
+        if (spawnInterval) clearInterval(spawnInterval);
+        spawnInterval = setInterval(createBubble, 1100);
+    }
+
+    // Start game on load
+    startSpawning();
+</script>
+</body>
+</html>

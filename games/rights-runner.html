@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Rights Runner | First Amendment Arcade</title>
+<style>
+  :root {
+    --ink:#0b1025; --panel:#141d3c; --line:#42517e; --cream:#fff6d8;
+    --muted:#abb7d6; --gold:#ffd35d; --mint:#61f4c7; --pink:#ff75bd; --sky:#92baff;
+  }
+  * { box-sizing:border-box; }
+  html { background:var(--ink); }
+  body { margin:0; min-height:100svh; color:var(--cream); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    background:radial-gradient(ellipse at 50% -10%,#28356a 0%,#111735 44%,#090d20 100%); }
+  button { font:inherit; cursor:pointer; }
+  button:focus-visible, a:focus-visible, summary:focus-visible { outline:3px solid var(--gold); outline-offset:4px; }
+  [hidden] { display:none !important; }
+  .shell { max-width:1140px; margin:0 auto; padding:20px 22px 26px; }
+  .masthead { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:17px; }
+  .brand { display:flex; align-items:center; gap:15px; }
+  .brand-icon { width:43px; height:43px; display:grid; place-items:center; border:3px solid var(--gold); background:#273769;
+    color:var(--gold); font-size:20px; font-weight:900; box-shadow:5px 5px 0 #030716; transform:rotate(-3deg); }
+  .eyebrow { font-size:11px; letter-spacing:2.3px; color:var(--mint); font-weight:800; }
+  h1 { margin:4px 0 0; font-size:clamp(22px,3.2vw,37px); letter-spacing:-1.8px; line-height:1; text-shadow:3px 3px 0 #070b19; }
+  .tag { color:var(--muted); font-size:11px; line-height:1.6; text-align:right; max-width:270px; }
+  .stage-frame { padding:6px; background:#34426e; border:3px solid #7083bc; box-shadow:0 10px 0 #060918,0 25px 65px #0008; border-radius:10px; }
+  .stage { position:relative; aspect-ratio:1000/600; overflow:hidden; isolation:isolate; border-radius:4px;
+    background:#131f48; user-select:none; -webkit-user-select:none; }
+  canvas { position:absolute; inset:0; display:block; width:100%; height:100%; }
+  .scanlines { pointer-events:none; position:absolute; inset:0; z-index:9; opacity:.15;
+    background:repeating-linear-gradient(to bottom,transparent 0,transparent 3px,#000 4px,#000 5px); }
+  .hud { position:absolute; top:15px; left:16px; right:16px; z-index:5; display:grid;
+    grid-template-columns:1.15fr 1fr 1fr 1fr; gap:9px; pointer-events:none; }
+  .stat { padding:9px 13px; border:2px solid #475b91; background:#0b1434de; box-shadow:3px 3px 0 #09102c; }
+  .stat-label { color:#a6badf; font-size:10px; letter-spacing:1.8px; font-weight:800; }
+  .stat-value { color:#fff5d5; font-size:clamp(13px,1.9vw,23px); font-weight:900; line-height:1.4; font-variant-numeric:tabular-nums; }
+  .stat-value.gold { color:var(--gold); } .stat-value.green { color:var(--mint); }
+  .progress { height:5px; background:#2c385e; margin-top:3px; }
+  .progress > div { width:0; height:100%; background:var(--mint); transition:width .25s ease; }
+  .question { position:absolute; z-index:4; top:17.7%; left:50%; transform:translateX(-50%); width:85%;
+    padding:13px 23px 16px; text-align:center; background:#101935f2; border:2px solid #5a6d9e;
+    box-shadow:5px 6px 0 #080d22; }
+  .question-meta { color:var(--mint); font-size:11px; font-weight:900; letter-spacing:2px; margin-bottom:8px; }
+  .question-text { margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-size:clamp(16px,2.25vw,23px); line-height:1.32; font-weight:750; text-wrap:balance; }
+  .gates { z-index:4; position:absolute; left:12%; right:12%; top:52%; display:grid; grid-template-columns:1fr 1fr; gap:13%; align-items:stretch; }
+  .gate { min-height:104px; padding:12px 15px 13px; border:3px solid #566ea4; background:#101b3fe9;
+    color:var(--cream); position:relative; text-align:center; box-shadow:5px 5px 0 #050b22;
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:7px; transition:transform .12s,border-color .12s,background .12s; }
+  .gate-label { color:#9eb9ec; font-size:11px; font-weight:900; letter-spacing:1.3px; }
+  .gate-copy { font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:clamp(12px,1.55vw,17px);
+    line-height:1.24; font-weight:750; text-wrap:balance; }
+  .gate.selected { border-color:var(--gold); background:#30355adc; transform:translateY(-6px); box-shadow:0 0 24px #ffdb5880,6px 7px 0 #060a1b; }
+  .gate.selected .gate-label { color:var(--gold); }
+  .gate.selected:before { content:'◆'; color:var(--gold); position:absolute; left:50%; transform:translateX(-50%); top:-27px;
+    animation:bob .8s ease-in-out infinite alternate; }
+  .gate:hover:not(:disabled) { border-color:#c5ddff; }
+  .gate.selected:hover { border-color:var(--gold); }
+  .gate:disabled { cursor:default; }
+  @keyframes bob { to { top:-32px; } }
+  .floor-tip { position:absolute; bottom:11px; left:50%; transform:translateX(-50%); z-index:4; white-space:nowrap;
+    text-align:center; max-width:95%; background:#0b1439c9; border:1px solid #5d6ea2; padding:7px 13px;
+    color:#d2ddf7; font-size:clamp(10px,1.25vw,13px); letter-spacing:.2px; }
+  kbd { background:#e9e6d4; border:1px solid #fff; border-bottom:3px solid #aeb4bc; color:#14203f;
+    font:900 12px ui-monospace,monospace; border-radius:3px; padding:2px 6px; }
+  .overlay { position:absolute; inset:0; z-index:7; display:grid; place-items:center; padding:16px;
+    background:#070d26c2; backdrop-filter:blur(3px); }
+  .dialog { width:min(660px,94%); max-height:96%; overflow:auto; padding:clamp(17px,3.2vw,34px); text-align:center;
+    background:#151f47; border:3px solid #8fa3dd; box-shadow:8px 8px 0 #05091b,0 0 40px #375d8655; }
+  .dialog.result-good { border-color:var(--gold); box-shadow:8px 8px 0 #05091b,0 0 60px #ffca4e42; }
+  .dialog.result-bad { border-color:var(--pink); box-shadow:8px 8px 0 #05091b,0 0 40px #ff75bd33; }
+  .dialog .micro { color:var(--mint); text-transform:uppercase; font-size:11px; letter-spacing:2px; font-weight:900; }
+  .dialog h2 { font-size:clamp(28px,5.8vw,59px); line-height:1.04; margin:12px 0 16px; text-transform:uppercase;
+    letter-spacing:-2px; text-shadow:4px 5px 0 #090f2b; }
+  .dialog h2.gold { color:var(--gold); } .dialog h2.pink { color:var(--pink); }
+  .intro-badge { font-size:48px; color:var(--gold); text-shadow:5px 5px 0 #0a1532; margin-bottom:8px; }
+  .dialog p { color:#e4eafa; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-size:clamp(14px,1.75vw,17px); line-height:1.5; margin:10px auto 18px; max-width:535px; }
+  .freedom-row { display:flex; justify-content:center; flex-wrap:wrap; gap:7px; margin:18px 0 23px; }
+  .freedom-row span { background:#2a3b71; padding:6px 9px; font-size:11px; color:#d6e1ff; border:1px solid #6073ac; }
+  .action { display:inline-block; border:2px solid #fff1a0; background:var(--gold); padding:11px 23px;
+    color:#182144; box-shadow:5px 5px 0 #040918; font-size:14px; font-weight:900; letter-spacing:1px; }
+  .action:hover { background:#ffe48e; transform:translateY(-2px); }
+  .dialog .small { margin:15px 0 0; color:#afbee5; font:12px ui-monospace,monospace; }
+  .result-earn { font-size:clamp(15px,2vw,21px); color:var(--gold); font-weight:900; margin:12px 0; }
+  .answer-reveal { border:1px solid #5d709f; background:#0a1533; padding:11px 13px; margin:13px auto;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif; font-weight:700; font-size:clamp(13px,1.7vw,16px); }
+  .source-tag { color:#9fb7e8; font-size:11px; line-height:1.5; margin:10px 0 16px; }
+  .summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:20px 0 15px; }
+  .summary > div { background:#0d1735; border:1px solid #6175aa; padding:13px 6px; }
+  .summary strong { display:block; color:var(--gold); font-size:clamp(20px,3.3vw,33px); }
+  .summary span { color:#bac8eb; text-transform:uppercase; letter-spacing:1px; font-size:10px; }
+  .missed { text-align:left; max-height:115px; overflow:auto; margin:8px 0 17px; font-size:12px; color:#c9d6f5; line-height:1.55; }
+  .missed b { color:var(--gold); }
+  .subbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    padding:17px 4px 0; color:#b4c1e0; font-size:12px; }
+  .source-details { margin-top:21px; border-top:1px solid #3e507d; padding-top:12px; color:#bec9e7; font-size:12px; line-height:1.6; }
+  summary { cursor:pointer; display:list-item; font-weight:800; color:#e4e9ff; }
+  .source-details p { max-width:900px; margin:12px 0; }
+  .source-details ul { margin:12px 0; padding-left:23px; }
+  .source-details li { margin:7px 0; }
+  .source-details a { color:#9fe9ff; overflow-wrap:anywhere; }
+  .sound { border:1px solid #7586b4; background:#1b2b52; color:#dce6ff; padding:7px 11px; font-size:11px; }
+  .sound:hover { border-color:var(--gold); }
+  .note { color:#8293be; }
+  @media (max-width:720px) {
+    .shell { padding:12px 10px 20px; }
+    .brand-icon { width:35px; height:35px; font-size:16px; }
+    .masthead { margin-bottom:12px; }
+    .tag { display:none; }
+    .stage-frame { padding:4px; }
+    .stage { aspect-ratio:auto; height:clamp(535px,82svh,700px); }
+    .hud { left:7px; right:7px; top:8px; gap:4px; grid-template-columns:repeat(4,1fr); }
+    .stat { padding:7px 5px; text-align:center; box-shadow:none; }
+    .stat-label { font-size:8px; letter-spacing:.2px; }
+    .stat-value { font-size:clamp(12px,2.9vw,17px); }
+    .question { top:15%; width:94%; padding:12px 11px; }
+    .question-text { font-size:clamp(15px,3.4vw,19px); }
+    .question-meta { font-size:10px; margin-bottom:6px; }
+    .gates { left:4%; right:4%; gap:5%; top:48%; }
+    .gate { min-height:120px; padding:12px 5px; box-shadow:2px 4px 0 #050b22; }
+    .gate-copy { font-size:clamp(12px,3.2vw,16px); }
+    .gate-label { font-size:10px; }
+    .floor-tip { white-space:normal; width:94%; }
+    .dialog { width:97%; max-height:96%; padding:19px 14px; }
+    .dialog h2 { letter-spacing:-1px; }
+    .summary { margin:10px 0; }
+    .intro-badge { font-size:37px; }
+    .subbar { font-size:10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *:before, *:after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="masthead">
+    <div class="brand"><div class="brand-icon" aria-hidden="true">★</div><div>
+      <div class="eyebrow">CIVICS ARCADE / PLAYER ONE</div>
+      <h1>RIGHTS RUNNER<span style="color:var(--gold)">.</span></h1>
+    </div></div>
+    <div class="tag">FIVE FREEDOMS. FIFTEEN GATES.<br>ONE VERY IMPORTANT AMENDMENT.</div>
+  </header>
+  <main>
+    <div class="stage-frame">
+      <section class="stage" id="stage" aria-label="Rights Runner game. Use left arrow, right arrow, and Space.">
+        <canvas id="world" aria-hidden="true"></canvas>
+        <div class="scanlines" aria-hidden="true"></div>
+        <div class="hud" id="hud" hidden>
+          <div class="stat"><div class="stat-label">GATE</div><div class="stat-value" id="gate-count">01 / 15</div><div class="progress"><div id="progress-fill"></div></div></div>
+          <div class="stat"><div class="stat-label">SCORE</div><div class="stat-value gold" id="score">0000</div></div>
+          <div class="stat"><div class="stat-label">STREAK</div><div class="stat-value green" id="streak">0 ×</div></div>
+          <div class="stat"><div class="stat-label">SHIELDS</div><div class="stat-value" id="shields" aria-label="3 of 3 shields">♥ ♥ ♥</div></div>
+        </div>
+        <section class="question" id="question" aria-label="Current challenge" hidden>
+          <div class="question-meta" id="question-meta"></div>
+          <p class="question-text" id="question-text"></p>
+        </section>
+        <div class="gates" id="gates" hidden>
+          <button class="gate" id="gate-left" type="button" aria-label="Choose the left gate">
+            <span class="gate-label">← LEFT GATE</span><span class="gate-copy" id="answer-left"></span>
+          </button>
+          <button class="gate" id="gate-right" type="button" aria-label="Choose the right gate">
+            <span class="gate-label">RIGHT GATE →</span><span class="gate-copy" id="answer-right"></span>
+          </button>
+        </div>
+        <div class="floor-tip" id="floor-tip" hidden>Use <kbd>←</kbd> <kbd>→</kbd> to choose &nbsp;•&nbsp; <kbd>SPACE</kbd> to dash!</div>
+        <div class="overlay" id="intro">
+          <div class="dialog" role="group" aria-label="Start screen">
+            <div class="intro-badge" aria-hidden="true">✦ ★ ✦</div>
+            <div class="micro">WELCOME TO THE FIRST AMENDMENT</div>
+            <h2>Choose your<br><span style="color:var(--gold)">freedom.</span></h2>
+            <p>Race through 15 two-way gates. Read the scenario, pick the legally stronger answer, then dash through. Earn coins, build a streak, and learn from every choice.</p>
+            <div class="freedom-row" aria-label="Five First Amendment freedoms"><span>SPEECH</span><span>PRESS</span><span>RELIGION</span><span>ASSEMBLY</span><span>PETITION</span></div>
+            <button class="action" type="button" id="start-button">▶ START GAME</button>
+            <p class="small">THREE KEYS ONLY: <kbd>←</kbd> <kbd>→</kbd> <kbd>SPACE</kbd><br>No timer. No accounts. No internet needed.</p>
+          </div>
+        </div>
+        <div class="overlay" id="feedback" hidden>
+          <div class="dialog" id="feedback-dialog" role="group" aria-label="Answer feedback">
+            <div class="micro" id="feedback-kicker"></div>
+            <h2 id="feedback-title"></h2>
+            <div class="result-earn" id="feedback-reward"></div>
+            <div class="answer-reveal" id="feedback-answer"></div>
+            <p id="feedback-explain"></p>
+            <div class="source-tag" id="feedback-source"></div>
+            <button class="action" id="next-button" type="button">▶ NEXT GATE</button>
+            <p class="small">PRESS <kbd>SPACE</kbd> TO CONTINUE</p>
+          </div>
+        </div>
+        <div class="overlay" id="final" hidden>
+          <div class="dialog" role="group" aria-label="Results screen">
+            <div class="micro">YOUR CIVICS RUN IS COMPLETE</div>
+            <h2 class="gold" id="final-title">GAME CLEAR!</h2>
+            <p id="final-caption"></p>
+            <div class="summary"><div><strong id="final-correct">0/15</strong><span>Correct</span></div>
+              <div><strong id="final-score">0</strong><span>Points</span></div>
+              <div><strong id="final-coins">0</strong><span>Coins</span></div></div>
+            <div class="missed" id="missed" aria-label="Topics worth reviewing"></div>
+            <button class="action" id="again-button" type="button">↻ RUN IT AGAIN</button>
+            <p class="small">PRESS <kbd>SPACE</kbd> TO REPLAY • Answers switch sides on a new run.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="subbar">
+      <span>◈ 15 mini-scenarios • Instant explanations • Keep playing after mistakes</span>
+      <button class="sound" id="sound-button" type="button" aria-pressed="true">♪ SOUND ON</button>
+    </div>
+    <details class="source-details">
+      <summary>Sources, legal context, and teaching notes</summary>
+      <p>The scenarios describe general U.S. First Amendment principles, not legal advice. Real cases depend on specific facts, and rights can have exceptions. The game deliberately uses clear-cut scenarios; if adapting these questions to current disputes, verify the controlling law and factual details. No hypothetical scenario is represented as an actual incident.</p>
+      <p><strong>References used for the question bank (included here so the file still works offline):</strong></p>
+      <ul>
+        <li>First Amendment to the U.S. Constitution: five protected freedoms. U.S. Courts educational overview: <a href="https://www.uscourts.gov/about-federal-courts/educational-resources/educational-activities/first-amendment-activities" target="_blank" rel="noopener noreferrer">U.S. Courts — First Amendment Activities</a>.</li>
+        <li><em>Tinker v. Des Moines Independent Community School District</em>, 393 U.S. 503 (1969): student symbolic speech. <a href="https://www.uscourts.gov/about-federal-courts/educational-resources/educational-activities/first-amendment-activities/tinker-v-des-moines/facts-and-case-summary-tinker-v-des-moines" target="_blank" rel="noopener noreferrer">U.S. Courts case summary</a>.</li>
+        <li><em>Cox v. New Hampshire</em>, 312 U.S. 569 (1941): reasonable time, place, and manner limits on parades. <a href="https://www.uscourts.gov/about-federal-courts/educational-resources/educational-activities/first-amendment-activities/cox-v-new-hampshire/facts-and-case-summary-cox-v-new-hampshire" target="_blank" rel="noopener noreferrer">U.S. Courts case summary</a>.</li>
+        <li><em>Engel v. Vitale</em>, 370 U.S. 421 (1962): state-sponsored public-school prayer. <a href="https://www.uscourts.gov/about-federal-courts/educational-resources/educational-activities/first-amendment-activities/engel-v-vitale/facts-and-case-summary-engel-v-vitale" target="_blank" rel="noopener noreferrer">U.S. Courts case summary</a>.</li>
+        <li><em>Cohen v. California</em>, 403 U.S. 15 (1971); <em>Brandenburg v. Ohio</em>, 395 U.S. 444 (1969): offensive political expression and incitement. <a href="https://www.uscourts.gov/about-federal-courts/educational-resources/about-educational-outreach/activity-resources/what-does-free-speech-mean" target="_blank" rel="noopener noreferrer">U.S. Courts — What Does Free Speech Mean?</a>.</li>
+        <li><em>Dietemann v. Time, Inc.</em>, 449 F.2d 245 (9th Cir. 1971): journalism does not create a license to trespass. See Ninth Circuit discussion in <a href="https://cdn.ca9.uscourts.gov/datastore/opinions/2022/10/21/20-16068.pdf" target="_blank" rel="noopener noreferrer">Animal Legal Defense Fund v. Wasden-related opinion</a>.</li>
+        <li>Petitioning does not require government to respond or adopt the requested policy; viewpoint discrimination is generally disallowed. <a href="https://www3.ce9.uscourts.gov/jury-instructions/node/149" target="_blank" rel="noopener noreferrer">Ninth Circuit Model Jury Instructions § 9.11</a> (citing <em>Minnesota State Board for Community Colleges v. Knight</em>, 465 U.S. 271 (1984), and other decisions).</li>
+      </ul>
+      <p class="note">The optional links lead to official court resources if internet access is available. No external content is fetched by the game itself. Educational material checked November 2026; recheck before reuse in a legal or graded setting.</p>
+    </details>
+  </main>
+</div>
+<script>
+(() => {
+  'use strict';
+
+  // Each answer is intentionally a compact, general educational statement.
+  // "correct" and "wrong" are randomized left/right on every new playthrough.
+  const BANK = [
+    { freedom:'SPEECH', prompt:'A city permits signs praising the mayor but bans signs criticizing the mayor. Which rule fits the First Amendment?',
+      correct:'The city cannot ban a viewpoint just because it dislikes it.', wrong:'City officials can ban criticism of themselves.',
+      explain:'Government generally cannot regulate speech to favor one viewpoint over its opposite. Political criticism receives strong First Amendment protection.', source:'First Amendment; Ninth Circuit Model Jury Instructions § 9.11' },
+    { freedom:'PRESS', prompt:'A newspaper plans to publish an editorial criticizing the governor. Which claim is stronger?',
+      correct:'The governor cannot silence it solely for being critical.', wrong:'The governor can outlaw any critical editorial.',
+      explain:'Freedom of the press protects independent criticism of public officials. The government cannot suppress an editorial merely because it dislikes the opinion.', source:'First Amendment, Freedom of the Press' },
+    { freedom:'RELIGION', prompt:'A state orders every resident to attend services for a particular religion. Is that constitutional?',
+      correct:'No. Government cannot require religious observance.', wrong:'Yes. The state may choose a religion for everyone.',
+      explain:'The Establishment and Free Exercise Clauses limit government involvement in religion, including compelling people to follow an official faith.', source:'First Amendment, Religion Clauses' },
+    { freedom:'ASSEMBLY', prompt:'A group wants to gather peacefully to protest a proposed law. Which freedom is explicitly listed in the First Amendment?',
+      correct:'The right to assemble peaceably.', wrong:'The right to use force to win a policy dispute.',
+      explain:'The First Amendment expressly protects the right of people peaceably to assemble. It does not create a right to commit violence.', source:'First Amendment, Assembly Clause' },
+    { freedom:'PETITION', prompt:'Neighbors send legislators a signed request to change a law. Which right most directly applies?',
+      correct:'The right to petition government.', wrong:'Only freedom of the press applies.',
+      explain:'Petitioning government for redress of grievances is one of the five freedoms expressly named in the First Amendment.', source:'First Amendment, Petition Clause' },
+    { freedom:'SPEECH', prompt:'A peaceful protester uses a political slogan many people find deeply offensive. Is that alone enough to remove protection?',
+      correct:'No. Offensive political expression may still be protected.', wrong:'Yes. Offensive political speech is never protected.',
+      explain:'The Supreme Court has protected offensive political expression. Being unpopular or upsetting, by itself, does not make speech unprotected.', source:'Cohen v. California, 403 U.S. 15 (1971)' },
+    { freedom:'PRESS', prompt:'A reporter wants to enter someone’s locked private home without permission to investigate a story. Does press freedom allow it?',
+      correct:'No. Press freedom is not a license to trespass.', wrong:'Yes. Reporters can enter any home for a story.',
+      explain:'Journalists have First Amendment protections, but they do not receive a blanket exemption from generally applicable laws against trespass.', source:'Dietemann v. Time, Inc., 449 F.2d 245 (9th Cir. 1971)' },
+    { freedom:'RELIGION', prompt:'A public school leads an official daily classroom prayer but lets students opt out. What did the Supreme Court hold?',
+      correct:'An opt-out did not save state-sponsored prayer.', wrong:'Any official school prayer is fine with an opt-out.',
+      explain:'In Engel v. Vitale, the Court held that state-sponsored prayer in public schools violated the Establishment Clause, even with an opt-out.', source:'Engel v. Vitale, 370 U.S. 421 (1962)' },
+    { freedom:'ASSEMBLY', prompt:'A town denies a peaceful protest because officials dislike the protesters’ viewpoint. What is the central concern?',
+      correct:'The government may not discriminate against viewpoints.', wrong:'Unpopular groups lose the right to assemble.',
+      explain:'Public officials cannot deny First Amendment rights merely because they oppose a group’s message. Other neutral safety restrictions may be lawful.', source:'First Amendment; Ninth Circuit Model Jury Instructions § 9.11' },
+    { freedom:'PETITION', prompt:'Someone petitions a city council to change a rule. Does the First Amendment require the council to agree or respond?',
+      correct:'No. Petition rights do not guarantee a reply.', wrong:'Yes. The council must agree or formally respond.',
+      explain:'The right to petition protects asking the government for change. It does not obligate officials to adopt the request or give a response.', source:'Minnesota State Board for Community Colleges v. Knight, 465 U.S. 271 (1984)' },
+    { freedom:'SPEECH', prompt:'Students wear black armbands to protest a war at a public school, without substantial disruption. Which is more accurate?',
+      correct:'Students retain First Amendment speech rights.', wrong:'Students have no speech rights at school.',
+      explain:'Tinker v. Des Moines held that students retain constitutional speech rights at public school, while recognizing limits for material and substantial disruption.', source:'Tinker v. Des Moines, 393 U.S. 503 (1969)' },
+    { freedom:'PRESS', prompt:'An independent local news website reports critically on city policy. Can city officials ban the report solely for criticizing them?',
+      correct:'No. Criticizing government is protected expression.', wrong:'Yes. Officials can ban unwanted reporting.',
+      explain:'The First Amendment protects press freedom and criticism of government. Government dislike of a report alone is not grounds to ban it.', source:'First Amendment, Speech and Press Clauses' },
+    { freedom:'RELIGION', prompt:'A public school announces that all students must join its chosen religion. Which constitutional principle is most directly implicated?',
+      correct:'The First Amendment’s religion protections.', wrong:'Only the right to petition government.',
+      explain:'The government cannot impose an official faith on public-school students. The First Amendment includes both Establishment and Free Exercise protections.', source:'First Amendment, Religion Clauses; Engel v. Vitale (1962)' },
+    { freedom:'ASSEMBLY', prompt:'A city sets a reasonable, viewpoint-neutral permit system for large street parades to protect public safety. Is every such rule forbidden?',
+      correct:'No. Some neutral time, place, and manner rules are allowed.', wrong:'Yes. Parades are exempt from all public-safety rules.',
+      explain:'The Supreme Court has allowed reasonable, content-neutral regulation of the time, place, and manner of parades. The details and application of a rule matter.', source:'Cox v. New Hampshire, 312 U.S. 569 (1941)' },
+    { freedom:'SPEECH', prompt:'A speaker urges a crowd to commit an immediate unlawful attack, and the attack is likely. Is that automatically protected?',
+      correct:'No. Incitement to imminent lawless action may be punished.', wrong:'Yes. Every statement is protected without exception.',
+      explain:'Under Brandenburg, advocacy aimed at producing imminent lawless action, and likely to produce it, can fall outside First Amendment protection.', source:'Brandenburg v. Ohio, 395 U.S. 444 (1969)' }
+  ];
+
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), canvas = $('world'), ctx = canvas.getContext('2d');
+  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const W = 1000, H = 600, laneX = [312,688];
+  let phase = 'intro', questions = [], index = 0, selected = -1;
+  let score = 0, coins = 0, streak = 0, shields = 3, correctCount = 0, record = [];
+  let runnerX = 500, dashAt = 0, lastAt = 0, sceneTime = 0, particles = [], effects = [], audio = null;
+  let soundEnabled = true;
+  const stars = Array.from({length:70}, (_,i) => ({x:(i*139.71+33)%1000,y:(i*57.33+21)%320,r:i%6===0?2:1}));
+  const buildingHeights = Array.from({length:38},(_,i)=>46 + ((i*37 + i*i*13)%108));
+
+  function playSound(kind) {
+    if (!soundEnabled) return;
+    try {
+      const AudioCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtor) return;
+      if (!audio) audio = new AudioCtor();
+      if (audio.state === 'suspended') audio.resume();
+      const patterns = {
+        start:[[390,0,.10],[520,.10,.12],[780,.24,.20]],
+        pick:[[330,0,.05]], dash:[[220,0,.08],[390,.11,.1]],
+        correct:[[490,0,.10],[620,.09,.10],[790,.19,.11],[990,.30,.20]],
+        wrong:[[290,0,.12],[205,.15,.24]], next:[[440,0,.07]]
+      };
+      (patterns[kind] || []).forEach(([frequency,delay,duration])=>{
+        const o=audio.createOscillator(),g=audio.createGain(),at=audio.currentTime+delay;
+        o.type=kind==='wrong'?'triangle':'square'; o.frequency.setValueAtTime(frequency,at);
+        g.gain.setValueAtTime(.0001,at); g.gain.exponentialRampToValueAtTime(.035,at+.016);
+        g.gain.exponentialRampToValueAtTime(.0001,at+duration);
+        o.connect(g); g.connect(audio.destination); o.start(at); o.stop(at+duration+.02);
+      });
+    } catch (_) { /* Silent fallback on browsers that restrict Web Audio. */ }
+  }
+
+  function startGame() {
+    questions=BANK.map(q=>({ ...q, correctSide:Math.random()<.5?0:1 }));
+    phase='question'; index=0; selected=-1; score=0; coins=0; streak=0; shields=3; correctCount=0; record=[];
+    runnerX=500; particles=[]; effects=[];
+    $('intro').hidden=true; $('final').hidden=true; $('feedback').hidden=true; $('hud').hidden=false;
+    playSound('start'); loadQuestion();
+  }
+
+  function loadQuestion() {
+    if (index >= questions.length) return finishGame();
+    phase='question'; selected=-1;
+    const q=questions[index];
+    $('question-meta').textContent=`GATE ${String(index+1).padStart(2,'0')} / ${BANK.length}  •  ${q.freedom}`;
+    $('question-text').textContent=q.prompt;
+    $('answer-left').textContent=q.correctSide===0?q.correct:q.wrong;
+    $('answer-right').textContent=q.correctSide===1?q.correct:q.wrong;
+    $('question').hidden=false; $('gates').hidden=false; $('floor-tip').hidden=false;
+    $('gate-left').disabled=false; $('gate-right').disabled=false;
+    $('floor-tip').innerHTML='Use <kbd>←</kbd> <kbd>→</kbd> to choose &nbsp;•&nbsp; <kbd>SPACE</kbd> to dash!';
+    updateSelection(); updateHUD();
+  }
+
+  function updateSelection() {
+    $('gate-left').classList.toggle('selected',selected===0);
+    $('gate-right').classList.toggle('selected',selected===1);
+    $('gate-left').setAttribute('aria-pressed',String(selected===0));
+    $('gate-right').setAttribute('aria-pressed',String(selected===1));
+  }
+  function choose(side) {
+    if (phase!=='question') return;
+    selected=side; updateSelection(); playSound('pick');
+    $('floor-tip').innerHTML=`${side===0?'LEFT':'RIGHT'} SELECTED &nbsp;•&nbsp; <kbd>SPACE</kbd> TO DASH!`;
+  }
+  function updateHUD() {
+    $('gate-count').textContent=`${String(Math.min(index+1,BANK.length)).padStart(2,'0')} / ${BANK.length}`;
+    $('score').textContent=String(score).padStart(4,'0');
+    $('streak').textContent=`${streak} ×`;
+    $('shields').textContent=Array.from({length:3},(_,i)=>i<shields?'♥':'♡').join(' ');
+    $('shields').setAttribute('aria-label',`${shields} of 3 shields`);
+    $('progress-fill').style.width=`${100*index/BANK.length}%`;
+  }
+  function dash() {
+    if (phase!=='question') return;
+    if (selected<0) {
+      $('floor-tip').textContent='PICK LEFT OR RIGHT FIRST — THEN PRESS SPACE';
+      return;
+    }
+    phase='dashing'; dashAt=performance.now();
+    $('gate-left').disabled=true; $('gate-right').disabled=true;
+    $('floor-tip').textContent='DASHING THROUGH THE GATE...';
+    playSound('dash');
+  }
+  function makeParticles(x,y,good) {
+    const count=reducedMotion?10:36;
+    for(let i=0;i<count;i++) {
+      const angle=Math.PI*2*i/count+(i%3)*.3, speed=2.4+Math.random()*5;
+      particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-1.2,
+        life:1,size:3+Math.random()*6,color:good?['#ffd35d','#61f4c7','#ffffff','#92baff'][i%4]:['#ff75bd','#ff9a87','#c3b4fa'][i%3]});
+    }
+  }
+  function resolveDash() {
+    const q=questions[index], good=selected===q.correctSide;
+    const oldStreak=streak; let earned=0, gained=0, shieldRestored=false;
+    if (good) {
+      correctCount++; streak++; earned=100+Math.min(150,streak*25); gained=10+(streak>=3?5:0);
+      score+=earned; coins+=gained;
+      if(streak%3===0 && shields<3) {shields++;shieldRestored=true;}
+    } else { streak=0; shields=Math.max(0,shields-1); }
+    record.push({freedom:q.freedom,correct:good,answer:q.correct});
+    makeParticles(laneX[selected],470,good);
+    effects.push({x:laneX[selected],y:405,label:good?`+${earned}`:'OOPS!',good,life:1});
+    playSound(good?'correct':'wrong');
+    $('feedback-dialog').className='dialog '+(good?'result-good':'result-bad');
+    $('feedback-kicker').textContent=`${q.freedom}  •  GATE ${String(index+1).padStart(2,'0')}`;
+    $('feedback-title').textContent=good?'GATE CLEAR!':'NOT QUITE!';
+    $('feedback-title').className=good?'gold':'pink';
+    $('feedback-reward').textContent=good?`★ +${earned} POINTS  ·  +${gained} COINS${shieldRestored?'  ·  SHIELD RESTORED!':''}`:
+      `SHIELD -1  ·  STREAK RESET${oldStreak?'':' '}`;
+    $('feedback-answer').textContent='RIGHT ANSWER: '+q.correct;
+    $('feedback-explain').textContent=q.explain;
+    $('feedback-source').textContent='SOURCE: '+q.source;
+    $('next-button').textContent=index===BANK.length-1?'★ SEE RESULTS':'▶ NEXT GATE';
+    $('question').hidden=true; $('gates').hidden=true; $('floor-tip').hidden=true;
+    phase='feedback'; $('feedback').hidden=false; updateHUD();
+  }
+  function continueGame() {
+    if (phase!=='feedback') return;
+    $('feedback').hidden=true; index++;
+    if (index>=questions.length) finishGame(); else {loadQuestion();playSound('next');}
+  }
+  function finishGame() {
+    phase='final'; $('feedback').hidden=true; $('question').hidden=true; $('gates').hidden=true; $('floor-tip').hidden=true;
+    $('progress-fill').style.width='100%';
+    let title,caption;
+    if(correctCount===15) {title='PERFECT RUN!'; caption='You cleared every gate. Your understanding of these foundational rights is flying high!';}
+    else if(correctCount>=12) {title='GREAT RUN!';caption='Strong constitutional instincts. Take a look at any gates you missed below.';}
+    else if(correctCount>=8) {title='LEVEL CLEAR!';caption='You made it to the finish line and learned from each gate. Try a rematch!';}
+    else {title='RUN COMPLETE!';caption='Every gate is practice. Review the explanations and try another run.';}
+    $('final-title').textContent=title; $('final-caption').textContent=caption;
+    $('final-correct').textContent=`${correctCount}/${BANK.length}`;
+    $('final-score').textContent=score.toLocaleString('en-US'); $('final-coins').textContent=String(coins);
+    const missed=record.filter(r=>!r.correct), node=$('missed');
+    node.replaceChildren();
+    if(!missed.length) { const p=document.createElement('div');p.textContent='★ No missed gates. All five freedoms represented!';node.appendChild(p); }
+    else {
+      const heading=document.createElement('b');heading.textContent=`REVIEW THESE ${missed.length} GATE${missed.length===1?'':'S'}:`;node.appendChild(heading);
+      missed.forEach(r=>{const d=document.createElement('div');d.textContent=`• ${r.freedom}: ${r.answer}`;node.appendChild(d);});
+    }
+    $('final').hidden=false;
+  }
+
+  // 2-D canvas arcade backdrop. All assets are drawn in code; no image or font files.
+  function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+  function line(x1,y1,x2,y2,color,width=2){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+  function drawBackdrop(t){
+    const bg=ctx.createLinearGradient(0,0,0,570);bg.addColorStop(0,'#121943');bg.addColorStop(.65,'#293d77');bg.addColorStop(1,'#462d6d');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    stars.forEach((s,i)=>{ctx.globalAlpha=.35+.28*Math.sin(t*1.3+i);rect(s.x,s.y,s.r,s.r,i%3?'#d8eaff':'#ffe8ab');});ctx.globalAlpha=1;
+    // Pixelated sunset and skyline.
+    ctx.fillStyle='#f4ab81';ctx.beginPath();ctx.arc(825,215,92,0,Math.PI*2);ctx.fill();
+    rect(740,233,173,8,'#e68f8b');rect(734,258,181,9,'#d87b9c');rect(750,284,160,10,'#bb72ac');
+    const offset=t*11;
+    ctx.fillStyle='#202957';
+    for(let i=-1;i<27;i++){
+      const x=i*55-(offset%55),h=58+((i*17+130)%76);
+      rect(x,435-h,57,h,'#273562');rect(x+10,440-h,4,6,'#56668e');rect(x+32,460-h,5,6,'#56668e');
+    }
+    for(let i=-1;i<42;i++){
+      const x=i*33-((offset*1.9)%33),h=buildingHeights[(i+42)%buildingHeights.length];
+      rect(x,506-h,35,h,'#15234b');
+      if(i%4!==0) for(let k=0;k<3;k++) rect(x+9+(k%2)*13,505-h+17+k*24,4,6,'#41558a');
+    }
+    ctx.fillStyle='#0c1739';ctx.fillRect(0,502,W,98);
+    line(0,501,1000,501,'#6687bb',5);line(0,512,1000,512,'#2f4d7f',2);
+    // Receding road grid and neon lanes.
+    for(let i=0;i<15;i++){
+      const x=((i*98-(t*95)%98)+1000)%1100-50;
+      line(x,502,x-25,600,'#243d68',2);
+    }
+    for(let y=523;y<=590;y+=24)line(0,y,1000,y,'#1e355e',2);
+    [312,688].forEach((x,i)=>{
+      rect(x-92,508,184,7,'#14264b');
+      line(x-114,522,x-114,592,'#465783',3);line(x+114,522,x+114,592,'#465783',3);
+      for(let k=0;k<4;k++)rect(x-3,541+k*15,6,7,'#526793');
+    });
+    rect(0,591,W,9,'#11142c');
+  }
+  function drawPortal(x,i,t){
+    const chosen=i===selected, active=phase==='question'||phase==='dashing';
+    const main=chosen&&active?'#ffd35d':i===0?'#64c7ee':'#d48cf3';
+    const edge=chosen&&active?'#fff6cf':'#445c94';
+    ctx.save();
+    ctx.globalAlpha=active?1:.62;
+    if(chosen&&active){ctx.shadowColor='#ffcd54';ctx.shadowBlur=30+6*Math.sin(t*5);}
+    rect(x-128,302,256,14,edge);rect(x-138,318,18,176,edge);rect(x+120,318,18,176,edge);
+    rect(x-121,310,242,9,main);rect(x-129,330,9,155,main);rect(x+120,330,9,155,main);
+    rect(x-147,476,37,19,'#283869');rect(x+111,476,37,19,'#283869');
+    rect(x-102,493,204,7,main);
+    ctx.globalAlpha=.23+Math.sin(t*2+i)*.04;
+    rect(x-111,324,222,150,main);
+    ctx.restore();
+  }
+  function drawRunner(x,t){
+    const running=phase==='dashing'||phase==='question';
+    const dashing=phase==='dashing';
+    const p=dashing?Math.min(1,(performance.now()-dashAt)/850):0;
+    const jump=dashing?Math.sin(p*Math.PI)*87:0;
+    const bob=running?(Math.sin(t*12)*3):0;
+    const y=525-jump+bob;
+    ctx.save();
+    ctx.globalAlpha=.36;ctx.fillStyle='#070c20';ctx.beginPath();ctx.ellipse(x,541,32*(1-jump/170),10,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+    ctx.translate(Math.round(x),Math.round(y));
+    const sw=Math.sin(t*(dashing?26:11))*7;
+    const pixel=(x,y,w,h,c)=>rect(x,y,w,h,c);
+    pixel(-14,-24,28,21,'#52d6b6');pixel(-14,-25,28,6,'#9af6d7');
+    pixel(-13,-53,26,28,'#f4be8b');pixel(-15,-57,30,9,'#253566');
+    pixel(-10,-61,18,5,'#ffd35d');pixel(-5,-44,4,4,'#162443');pixel(7,-44,4,4,'#162443');
+    pixel(-19,-18,7,16,'#ffcf65');pixel(13,-18,7,16,'#ffcf65');
+    pixel(-12,-3+sw*.4,9,21,'#3a5c9c');pixel(3,-3-sw*.4,9,21,'#3a5c9c');
+    pixel(-16,16+sw*.4,14,6,'#ffffff');pixel(2,16-sw*.4,15,6,'#ffffff');
+    pixel(-4,-20,8,8,'#fff7cf');
+    ctx.restore();
+  }
+  function drawDecor(t){
+    // Sparkling coin near the center, outside of active choices.
+    if(phase==='intro'||phase==='final'){
+      const y=370+Math.sin(t*2)*12;
+      ctx.fillStyle='#e8b94c';ctx.beginPath();ctx.ellipse(500,y,22,28,0,0,Math.PI*2);ctx.fill();
+      rect(495,y-15,10,29,'#fff2ae');
+      for(let i=0;i<4;i++){const x=442+i*38;rect(x,395+Math.sin(t*2+i)*10,5,5,'#87f5d1');}
+    }
+  }
+  function drawParticles(dt){
+    for(let i=particles.length-1;i>=0;i--){
+      const p=particles[i];p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.vy+=.13*dt*60;p.life-=dt*1.15;
+      if(p.life<=0){particles.splice(i,1);continue;}
+      ctx.globalAlpha=Math.max(0,p.life);rect(p.x,p.y,p.size,p.size,p.color);
+    }ctx.globalAlpha=1;
+    ctx.textAlign='center';ctx.font='900 30px monospace';
+    for(let i=effects.length-1;i>=0;i--){
+      const e=effects[i];e.life-=dt*.85;e.y-=dt*55;
+      if(e.life<=0){effects.splice(i,1);continue;}
+      ctx.globalAlpha=e.life;ctx.fillStyle=e.good?'#ffe385':'#ff88c2';ctx.fillText(e.label,e.x,e.y);
+    }ctx.globalAlpha=1;
+  }
+  function frame(ms){
+    const dt=Math.min(.05,lastAt?(ms-lastAt)/1000:.016);lastAt=ms;
+    sceneTime+=reducedMotion?dt*.14:dt;
+    const dpr=Math.min(2,window.devicePixelRatio||1),cw=canvas.clientWidth,ch=canvas.clientHeight;
+    const pxW=Math.max(1,Math.round(cw*dpr)),pxH=Math.max(1,Math.round(ch*dpr));
+    if(canvas.width!==pxW||canvas.height!==pxH){canvas.width=pxW;canvas.height=pxH;}
+    ctx.setTransform(pxW/W,0,0,pxH/H,0,0);
+    drawBackdrop(sceneTime);
+    if(phase!=='intro'){
+      drawPortal(laneX[0],0,sceneTime);drawPortal(laneX[1],1,sceneTime);
+    }
+    const target=selected<0?500:laneX[selected];runnerX+=(target-runnerX)*Math.min(1,dt*10);
+    drawRunner(runnerX,sceneTime);drawDecor(sceneTime);drawParticles(dt);
+    if(phase==='dashing' && ms-dashAt>(reducedMotion?180:850))resolveDash();
+    requestAnimationFrame(frame);
+  }
+  function keyDown(e){
+    const k=e.key;
+    if(!['ArrowLeft','ArrowRight',' ','Spacebar'].includes(k))return;
+    // Allow text/link navigation outside the game only; game interaction always uses these 3 keys.
+    if(e.target && (e.target.tagName==='A'||e.target.tagName==='SUMMARY'))return;
+    e.preventDefault();if(e.repeat)return;
+    if(k==='ArrowLeft'){choose(0);return;}
+    if(k==='ArrowRight'){choose(1);return;}
+    if(phase==='intro'||phase==='final')startGame();
+    else if(phase==='question')dash();
+    else if(phase==='feedback')continueGame();
+  }
+  document.addEventListener('keydown',keyDown);
+  $('gate-left').addEventListener('click',()=>choose(0));
+  $('gate-right').addEventListener('click',()=>choose(1));
+  $('start-button').addEventListener('click',startGame);
+  $('next-button').addEventListener('click',continueGame);
+  $('again-button').addEventListener('click',startGame);
+  $('sound-button').addEventListener('click',()=>{
+    soundEnabled=!soundEnabled;
+    $('sound-button').textContent=soundEnabled?'♪ SOUND ON':'♪ SOUND OFF';
+    $('sound-button').setAttribute('aria-pressed',String(soundEnabled));
+    if(soundEnabled)playSound('pick');
+  });
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

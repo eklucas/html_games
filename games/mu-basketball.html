@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mizzou Tigers Basketball Showdown</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: #0d0d0d;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 900px;
+            height: 550px;
+            box-shadow: 0 0 35px rgba(241, 184, 45, 0.3);
+            border: 4px solid #F1B82D;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #111;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            z-index: 10;
+        }
+        .hidden {
+            display: none !important;
+        }
+        h1 {
+            font-size: 42px;
+            color: #F1B82D;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(241, 184, 45, 0.6);
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 20px;
+            color: #ffffff;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #F1B82D 0%, #c49117 100%);
+            color: #000;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(241, 184, 45, 0.5);
+            background: linear-gradient(135deg, #ffd15c 0%, #F1B82D 100%);
+        }
+        .btn:active {
+            transform: translateY(1px);
+        }
+        .controls-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 2px solid #F1B82D;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 10px;
+            z-index: 6;
+            font-size: 13px;
+        }
+        .key-badge {
+            background: #F1B82D;
+            color: #000;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin-right: 4px;
+        }
+        .team-select-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+            width: 80%;
+            max-width: 500px;
+        }
+        .team-card {
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #1a1a1a;
+        }
+        .team-card:hover, .team-card.selected {
+            border-color: #F1B82D;
+            background: #2a2a2a;
+            transform: scale(1.03);
+        }
+        .team-card.selected {
+            box-shadow: 0 0 10px rgba(241, 184, 45, 0.5);
+        }
+        .team-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        .team-colors {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .controls-info {
+            background: rgba(255,255,255,0.05);
+            border-left: 4px solid #F1B82D;
+            padding: 12px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 15px;
+            max-width: 600px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .hud-top {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 6px 20px;
+            gap: 20px;
+            z-index: 5;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .score-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .score-num {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 26px;
+            color: #F1B82D;
+        }
+        .timer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-left: 1px solid #444;
+            border-right: 1px solid #444;
+            padding: 0 15px;
+        }
+        .time-display {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 22px;
+            color: #ff3333;
+            font-weight: bold;
+        }
+        .shot-clock {
+            font-size: 12px;
+            color: #aaa;
+        }
+        .commentary {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #00ffcc;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 5;
+            pointer-events: none;
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            text-align: center;
+            max-width: 80%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .stats-table {
+            width: 80%;
+            margin: 15px 0;
+            border-collapse: collapse;
+        }
+        .stats-table th, .stats-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+        .stats-table th {
+            color: #F1B82D;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Canvas Layer -->
+        <canvas id="gameCanvas" width="900" height="550"></canvas>
+
+        <!-- Top Scoreboard HUD -->
+        <div id="hud" class="hud-top hidden">
+            <div class="score-box">
+                <span id="home-name">MIZZOU</span>
+                <span id="home-score" class="score-num">0</span>
+            </div>
+            <div class="timer-box">
+                <div id="game-timer" class="time-display">02:00</div>
+                <div class="shot-clock">TIMEOUTS: <span id="timeouts-left" style="color:#F1B82D; font-weight:bold;">2</span> | SHOT: <span id="shot-timer">24</span></div>
+            </div>
+            <div class="score-box">
+                <span id="away-score" class="score-num">0</span>
+                <span id="away-name">OPPONENT</span>
+            </div>
+        </div>
+
+        <!-- On-Screen Key Helper HUD -->
+        <div id="controls-bar" class="controls-bar hidden">
+            <div><span class="key-badge">ARROWS</span> Move</div>
+            <div><span class="key-badge">SPACE</span> Hold to Shoot / Steal</div>
+            <div><span class="key-badge">P</span> Pass</div>
+            <div><span class="key-badge">T</span> Timeout (<span id="hud-timeouts">2</span> Left)</div>
+            <div><span class="key-badge">ESC</span> Pause</div>
+        </div>
+
+        <!-- Dynamic Commentary Ticker -->
+        <div id="commentary" class="commentary hidden">Welcome to Mizzou Basketball Showdown!</div>
+
+        <!-- Menu Screen: Team Selection / Start -->
+        <div id="start-screen" class="overlay">
+            <h1>MIZZOU TIGERS</h1>
+            <h2>BASKETBALL SHOWDOWN</h2>
+
+            <p style="margin-bottom: 10px; color: #aaa; font-size: 14px;">SELECT OPPONENT RIVAL:</p>
+            <div class="team-select-grid" id="team-selector"></div>
+
+            <div class="btn-group">
+                <button class="btn" id="start-btn">TIP OFF GAME</button>
+                <button class="btn" id="how-to-play-btn" style="background:#333; color:#fff;">HOW TO PLAY</button>
+            </div>
+        </div>
+
+        <!-- How To Play Modal -->
+        <div id="tutorial-screen" class="overlay hidden">
+            <h1>HOW TO PLAY</h1>
+            <div class="controls-info" style="max-width: 550px; font-size: 14px; margin-bottom: 20px;">
+                <p style="margin-bottom:8px;">🏀 <strong>SHOOTING:</strong> Press & Hold <span style="color:#F1B82D;">SPACEBAR</span> to charge shot meter. Release in green ring!</p>
+                <p style="margin-bottom:8px;">🏀 <strong>PASSING:</strong> Press <span style="color:#F1B82D;">'P'</span> key or double-tap <span style="color:#F1B82D;">SPACEBAR</span> to pass to teammate.</p>
+                <p style="margin-bottom:8px;">🏀 <strong>DEFENSE:</strong> Move near opponent and tap <span style="color:#F1B82D;">SPACEBAR</span> to steal or block.</p>
+                <p style="margin-bottom:8px;">🏀 <strong>TIMEOUTS:</strong> Press <span style="color:#F1B82D;">'T'</span> to call a timeout and reset court positions.</p>
+                <p>🏀 <strong>SCORING:</strong> 2 Points inside arc, 3 Points outside line.</p>
+            </div>
+            <button class="btn" id="close-tutorial-btn">GOT IT!</button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div id="pause-screen" class="overlay hidden">
+            <h1>GAME PAUSED</h1>
+            <div class="btn-group" style="flex-direction: column;">
+                <button class="btn" id="resume-btn">RESUME GAME</button>
+                <button class="btn" id="restart-btn" style="background: #444; color: #fff;">QUIT TO MENU</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="overlay hidden">
+            <h1 id="game-result-title">FINAL SCORE</h1>
+            <h2 id="game-result-subtitle">Mizzou Victory!</h2>
+
+            <table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>Points</th>
+                        <th>FG Made/Att</th>
+                        <th>Steals</th>
+                    </tr>
+                </thead>
+                <tbody id="stats-body"></tbody>
+            </table>
+
+            <div class="btn-group">
+                <button class="btn" id="rematch-btn">PLAY AGAIN</button>
+                <button class="btn" id="menu-btn" style="background: #444; color: #fff;">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Web Audio API Synth Sound Effects ---
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playBounce() {
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playSwish() {
+                if (!this.ctx) return;
+                let bufferSize = this.ctx.sampleRate * 0.15;
+                let buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                let output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                let whiteNoise = this.ctx.createBufferSource();
+                whiteNoise.buffer = buffer;
+
+                let filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                filter.Q.setValueAtTime(3, this.ctx.currentTime);
+
+                let gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+
+                whiteNoise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                whiteNoise.start();
+            }
+
+            playRim() {
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(90, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            }
+
+            playWhistle() {
+                if (!this.ctx) return;
+                let osc1 = this.ctx.createOscillator();
+                let osc2 = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc1.type = 'sine';
+                osc2.type = 'sine';
+                osc1.frequency.setValueAtTime(2400, this.ctx.currentTime);
+                osc2.frequency.setValueAtTime(2450, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc1.start();
+                osc2.start();
+                osc1.stop(this.ctx.currentTime + 0.35);
+                osc2.stop(this.ctx.currentTime + 0.35);
+            }
+
+            playBuzzer() {
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.8);
+            }
+
+            playCheer() {
+                if (!this.ctx) return;
+                let bufferSize = this.ctx.sampleRate * 0.5;
+                let buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                let output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                let noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                let filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(800, this.ctx.currentTime);
+
+                let gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            }
+        }
+
+        const audio = new SoundFX();
+
+        // --- Game Setup Data ---
+        const OPPONENTS = [
+            { id: 'ku', name: 'Jayhawks', school: 'Kansas', primary: '#0051BA', secondary: '#E8000D' },
+            { id: 'uk', name: 'Wildcats', school: 'Kentucky', primary: '#0033A0', secondary: '#FFFFFF' },
+            { id: 'ark', name: 'Razorbacks', school: 'Arkansas', primary: '#9D2235', secondary: '#FFFFFF' },
+            { id: 'ill', name: 'Fighting Illini', school: 'Illinois', primary: '#13294B', secondary: '#E84A27' }
+        ];
+
+        const MIZZOU = { name: 'Tigers', school: 'Mizzou', primary: '#F1B82D', secondary: '#000000' };
+
+        // Canvas Elements
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // State Machine
+        let gameState = 'MENU';
+        let selectedOpponentIndex = 0;
+        let selectedOpponent = OPPONENTS[0];
+
+        // Controls & Timers
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        let spacePressedTime = 0;
+        let spaceIsCharging = false;
+        let lastSpaceTapTime = 0;
+        let homeTimeoutsLeft = 2;
+        const SHOOT_METER_MAX_TIME = 800;
+
+        let gameTime = 120; // 2 minutes
+        let shotClock = 24;
+        let gameTimerInterval = null;
+        let shotClockInterval = null;
+
+        let homeScore = 0;
+        let awayScore = 0;
+        let homeFG = { made: 0, att: 0 };
+        let awayFG = { made: 0, att: 0 };
+        let homeSteals = 0;
+        let awaySteals = 0;
+
+        // Particle System
+        let particles = [];
+        function addParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x, y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    life: 1,
+                    decay: Math.random() * 0.03 + 0.02,
+                    color: color,
+                    size: Math.random() * 3 + 2
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= p.decay;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        // --- Game Logic Constants & Entities ---
+        const COURT = {
+            x: 50,
+            y: 50,
+            width: 800,
+            height: 450,
+            hoopLeft: { x: 95, y: 275, r: 12 },
+            hoopRight: { x: 805, y: 275, r: 12 }
+        };
+
+        class Player {
+            constructor(x, y, team, isUserControlled = false, number = 1) {
+                this.x = x;
+                this.y = y;
+                this.radius = 14;
+                this.team = team;
+                this.isUserControlled = isUserControlled;
+                this.number = number;
+                this.speed = 2.8;
+                this.vx = 0;
+                this.vy = 0;
+                this.hasBall = false;
+                this.stealCooldown = 0;
+            }
+
+            update() {
+                if (this.stealCooldown > 0) this.stealCooldown--;
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                const minX = COURT.x + this.radius;
+                const maxX = COURT.x + COURT.width - this.radius;
+                const minY = COURT.y + this.radius;
+                const maxY = COURT.y + COURT.height - this.radius;
+
+                this.x = Math.max(minX, Math.min(maxX, this.x));
+                this.y = Math.max(minY, Math.min(maxY, this.y));
+
+                this.vx *= 0.85;
+                this.vy *= 0.85;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.isUserControlled) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#00ffcc';
+                    ctx.lineWidth = 2.5;
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                ctx.beginPath();
+                ctx.ellipse(0, this.radius - 2, this.radius, this.radius / 2, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.team === 'HOME' ? MIZZOU.primary : selectedOpponent.primary;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = this.team === 'HOME' ? MIZZOU.secondary : selectedOpponent.secondary;
+                ctx.stroke();
+
+                ctx.fillStyle = this.team === 'HOME' ? '#000' : '#fff';
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.number.toString(), 0, 1);
+
+                ctx.restore();
+            }
+        }
+
+        class Ball {
+            constructor() {
+                this.x = COURT.x + COURT.width / 2;
+                this.y = COURT.y + COURT.height / 2;
+                this.z = 0;
+                this.radius = 8;
+                this.holder = null;
+                this.isAirborne = false;
+                this.targetHoop = null;
+                this.startX = 0;
+                this.startY = 0;
+                this.targetX = 0;
+                this.targetY = 0;
+                this.flightProgress = 0;
+                this.flightSpeed = 0.04;
+                this.arcHeight = 80;
+                this.isPass = false;
+                this.passTarget = null;
+                this.pointsValue = 2;
+            }
+
+            update() {
+                if (this.holder) {
+                    this.x = this.holder.x + 8;
+                    this.y = this.holder.y;
+                    this.z = 10;
+                } else if (this.isAirborne) {
+                    this.flightProgress += this.flightSpeed;
+
+                    this.x = this.startX + (this.targetX - this.startX) * this.flightProgress;
+                    this.y = this.startY + (this.targetY - this.startY) * this.flightProgress;
+                    this.z = Math.sin(this.flightProgress * Math.PI) * this.arcHeight;
+
+                    if (this.flightProgress >= 1) {
+                        this.isAirborne = false;
+                        this.flightProgress = 0;
+
+                        if (this.isPass && this.passTarget) {
+                            this.holder = this.passTarget;
+                            this.passTarget.hasBall = true;
+                            this.isPass = false;
+                            audio.playBounce();
+                        } else if (this.targetHoop) {
+                            checkShotOutcome();
+                        }
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+
+                ctx.beginPath();
+                ctx.ellipse(this.x, this.y, this.radius, this.radius / 2, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fill();
+
+                const drawY = this.y - this.z;
+                ctx.beginPath();
+                ctx.arc(this.x, drawY, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff6600';
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        }
+
+        let players = [];
+        let ball = new Ball();
+
+        function drawKey(x, y, w, h, side) {
+            ctx.fillStyle = 'rgba(241, 184, 45, 0.15)';
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, w, h);
+
+            const arcX = side === 'left' ? x + w : x;
+            ctx.beginPath();
+            ctx.arc(arcX, y + h / 2, h / 2, -Math.PI / 2, Math.PI / 2, side === 'left');
+            ctx.stroke();
+        }
+
+        function drawCourt() {
+            ctx.fillStyle = '#c8965d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#b07e46';
+            ctx.fillRect(COURT.x, COURT.y, COURT.width, COURT.height);
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(COURT.x, COURT.y, COURT.width, COURT.height);
+
+            ctx.beginPath();
+            ctx.moveTo(COURT.x + COURT.width / 2, COURT.y);
+            ctx.lineTo(COURT.x + COURT.width / 2, COURT.y + COURT.height);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(COURT.x + COURT.width / 2, COURT.y + COURT.height / 2, 60, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = '#F1B82D';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('MIZZOU', COURT.x + COURT.width / 2, COURT.y + COURT.height / 2);
+
+            drawKey(COURT.x, COURT.y + 140, 140, 170, 'left');
+            drawKey(COURT.x + COURT.width - 140, COURT.y + 140, 140, 170, 'right');
+
+            ctx.beginPath();
+            ctx.arc(COURT.hoopLeft.x, COURT.hoopLeft.y, 220, -Math.PI / 2.3, Math.PI / 2.3, false);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(COURT.hoopRight.x, COURT.hoopRight.y, 220, Math.PI - Math.PI / 2.3, Math.PI + Math.PI / 2.3, false);
+            ctx.stroke();
+
+            // Left Hoop & Backboard
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(COURT.x + 25, COURT.hoopLeft.y - 30);
+            ctx.lineTo(COURT.x + 25, COURT.hoopLeft.y + 30);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ff3300';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(COURT.hoopLeft.x, COURT.hoopLeft.y, COURT.hoopLeft.r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Right Hoop & Backboard
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(COURT.x + COURT.width - 25, COURT.hoopRight.y - 30);
+            ctx.lineTo(COURT.x + COURT.width - 25, COURT.hoopRight.y + 30);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ff3300';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(COURT.hoopRight.x, COURT.hoopRight.y, COURT.hoopRight.r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        function drawShotTrajectory() {
+            if (!ball.holder || !ball.holder.isUserControlled) return;
+
+            const hoop = COURT.hoopRight;
+            ctx.save();
+            ctx.beginPath();
+            ctx.setLineDash([6, 6]);
+            ctx.moveTo(ball.holder.x, ball.holder.y);
+            ctx.lineTo(hoop.x, hoop.y);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawShotMeter() {
+            if (!spaceIsCharging || !ball.holder || !ball.holder.isUserControlled) return;
+
+            const now = performance.now();
+            const elapsed = (now - spacePressedTime) % SHOOT_METER_MAX_TIME;
+            let ratio = elapsed / (SHOOT_METER_MAX_TIME / 2);
+            if (ratio > 1) ratio = 2 - ratio;
+
+            const holder = ball.holder;
+            const meterWidth = 50;
+            const meterHeight = 8;
+            const meterX = holder.x - meterWidth / 2;
+            const meterY = holder.y - 30;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(meterX, meterY, meterWidth, meterHeight);
+            ctx.strokeStyle = '#fff';
+            ctx.strokeRect(meterX, meterY, meterWidth, meterHeight);
+
+            ctx.fillStyle = '#00ffcc';
+            ctx.fillRect(meterX + meterWidth * 0.4, meterY, meterWidth * 0.2, meterHeight);
+
+            const barPos = meterX + (meterWidth * ratio);
+            ctx.fillStyle = '#ff3333';
+            ctx.fillRect(barPos - 2, meterY - 2, 4, meterHeight + 4);
+        }
+
+        function setCommentary(msg) {
+            const el = document.getElementById('commentary');
+            el.innerText = msg;
+            el.classList.remove('hidden');
+        }
+
+        function handleUserMovement() {
+            const user = players.find(p => p.isUserControlled);
+            if (!user) return;
+
+            user.vx = 0;
+            user.vy = 0;
+            if (keys.ArrowUp) user.vy = -user.speed;
+            if (keys.ArrowDown) user.vy = user.speed;
+            if (keys.ArrowLeft) user.vx = -user.speed;
+            if (keys.ArrowRight) user.vx = user.speed;
+        }
+
+        function updateAI() {
+            players.forEach(p => {
+                if (p.isUserControlled) return;
+
+                if (p.team === 'AWAY' && p.hasBall) {
+                    const targetX = COURT.hoopLeft.x + 120;
+                    const targetY = COURT.hoopLeft.y;
+
+                    if (p.x > targetX) p.vx = -1.8;
+                    else p.vx = 0;
+
+                    if (Math.abs(p.y - targetY) > 10) {
+                        p.vy = p.y < targetY ? 1.5 : -1.5;
+                    }
+
+                    if (Math.abs(p.x - targetX) < 30 && Math.random() < 0.02) {
+                        executeShot(p, COURT.hoopLeft);
+                    }
+                } else if (!p.hasBall) {
+                    if (ball.holder && ball.holder.team !== p.team) {
+                        p.vx = (ball.holder.x - p.x) * 0.04;
+                        p.vy = (ball.holder.y - p.y) * 0.04;
+                    }
+                }
+            });
+        }
+
+        function checkBallCollisions() {
+            if (ball.holder || ball.isAirborne) return;
+
+            players.forEach(p => {
+                const dist = Math.hypot(p.x - ball.x, p.y - ball.y);
+                if (dist < p.radius + ball.radius) {
+                    ball.holder = p;
+                    p.hasBall = true;
+                    shotClock = 24;
+                    setCommentary(`${p.team === 'HOME' ? 'Mizzou' : selectedOpponent.name} secured the ball!`);
+                    audio.playBounce();
+                }
+            });
+        }
+
+        function passBall() {
+            const user = players.find(p => p.isUserControlled);
+            if (!user || !user.hasBall) return;
+
+            const teammate = players.find(p => p.team === 'HOME' && !p.isUserControlled);
+            if (!teammate) return;
+
+            user.hasBall = false;
+            ball.holder = null;
+            ball.isAirborne = true;
+            ball.isPass = true;
+            ball.passTarget = teammate;
+            ball.startX = user.x;
+            ball.startY = user.y;
+            ball.targetX = teammate.x;
+            ball.targetY = teammate.y;
+            ball.arcHeight = 30;
+            ball.flightProgress = 0;
+            ball.flightSpeed = 0.06;
+
+            user.isUserControlled = false;
+            teammate.isUserControlled = true;
+
+            setCommentary("Crisp pass by Mizzou!");
+            audio.playBounce();
+        }
+
+        function callTimeout() {
+            if (homeTimeoutsLeft <= 0 || gameState !== 'PLAYING') return;
+            homeTimeoutsLeft--;
+            document.getElementById('timeouts-left').innerText = homeTimeoutsLeft;
+            document.getElementById('hud-timeouts').innerText = homeTimeoutsLeft;
+
+            audio.playWhistle();
+            setCommentary("TIMEOUT MIZZOU! Resetting play...");
+            resetPossession('HOME');
+        }
+
+        function executeShot(shooter, hoop) {
+            shooter.hasBall = false;
+            ball.holder = null;
+            ball.isAirborne = true;
+            ball.isPass = false;
+            ball.targetHoop = hoop;
+            ball.startX = shooter.x;
+            ball.startY = shooter.y;
+            ball.targetX = hoop.x;
+            ball.targetY = hoop.y;
+            ball.arcHeight = 100;
+            ball.flightProgress = 0;
+            ball.flightSpeed = 0.035;
+
+            const distToHoop = Math.hypot(shooter.x - hoop.x, shooter.y - hoop.y);
+            ball.pointsValue = distToHoop > 220 ? 3 : 2;
+
+            if (shooter.team === 'HOME') homeFG.att++;
+            else awayFG.att++;
+
+            setCommentary(`${shooter.team === 'HOME' ? 'Mizzou' : selectedOpponent.name} fires a ${ball.pointsValue}-pointer!`);
+        }
+
+        function releaseShot() {
+            const user = players.find(p => p.isUserControlled);
+            if (!user || !user.hasBall) return;
+
+            const elapsed = (performance.now() - spacePressedTime) % SHOOT_METER_MAX_TIME;
+            let ratio = elapsed / (SHOOT_METER_MAX_TIME / 2);
+            if (ratio > 1) ratio = 2 - ratio;
+
+            const isGreen = ratio >= 0.4 && ratio <= 0.6;
+            executeShot(user, COURT.hoopRight);
+            ball.userShotSuccess = isGreen || Math.random() < 0.35;
+        }
+
+        function checkShotOutcome() {
+            const isHome = ball.startX < COURT.x + COURT.width / 2;
+            const success = ball.userShotSuccess !== undefined ? ball.userShotSuccess : Math.random() < 0.5;
+
+            if (success) {
+                audio.playSwish();
+                audio.playCheer();
+                addParticles(ball.targetHoop.x, ball.targetHoop.y, '#00ffcc', 20);
+
+                if (isHome) {
+                    homeScore += ball.pointsValue;
+                    homeFG.made++;
+                    setCommentary(`SWISH! Mizzou scores ${ball.pointsValue} points!`);
+                } else {
+                    awayScore += ball.pointsValue;
+                    awayFG.made++;
+                    setCommentary(`${selectedOpponent.name} score ${ball.pointsValue} points.`);
+                }
+                updateScoreDisplay();
+                resetPossession(isHome ? 'AWAY' : 'HOME');
+            } else {
+                audio.playRim();
+                setCommentary("Clank! Shot off the rim.");
+                ball.isAirborne = false;
+                ball.holder = null;
+                ball.x = ball.targetHoop.x + (Math.random() - 0.5) * 40;
+                ball.y = ball.targetHoop.y + 40;
+                ball.z = 0;
+            }
+            ball.userShotSuccess = undefined;
+        }
+
+        function attemptSteal() {
+            const user = players.find(p => p.isUserControlled);
+            if (!user || user.hasBall) return;
+
+            const opp = players.find(p => p.team === 'AWAY' && p.hasBall);
+            if (opp && Math.hypot(user.x - opp.x, user.y - opp.y) < 35) {
+                if (Math.random() < 0.6) {
+                    opp.hasBall = false;
+                    user.hasBall = true;
+                    ball.holder = user;
+                    homeSteals++;
+                    audio.playWhistle();
+                    setCommentary("GREAT STEAL BY MIZZOU!");
+                } else {
+                    setCommentary("Reach-in attempt missed!");
+                }
+            }
+        }
+
+        function resetPossession(teamWithBall) {
+            players[0].x = COURT.x + 250; players[0].y = COURT.y + 200;
+            players[1].x = COURT.x + 200; players[1].y = COURT.y + 300;
+            players[2].x = COURT.x + 550; players[2].y = COURT.y + 200;
+            players[3].x = COURT.x + 600; players[3].y = COURT.y + 300;
+
+            players.forEach(p => p.hasBall = false);
+
+            const ballCarrier = teamWithBall === 'HOME' ? players[0] : players[2];
+            ballCarrier.hasBall = true;
+            ball.holder = ballCarrier;
+            ball.isAirborne = false;
+            shotClock = 24;
+
+            players[0].isUserControlled = true;
+            players[1].isUserControlled = false;
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('home-score').innerText = homeScore;
+            document.getElementById('away-score').innerText = awayScore;
+        }
+
+        function updateClockDisplay() {
+            const mins = Math.floor(gameTime / 60).toString().padStart(2, '0');
+            const secs = (gameTime % 60).toString().padStart(2, '0');
+            document.getElementById('game-timer').innerText = `${mins}:${secs}`;
+            document.getElementById('shot-timer').innerText = shotClock;
+        }
+
+        function startTimers() {
+            clearInterval(gameTimerInterval);
+            clearInterval(shotClockInterval);
+
+            gameTimerInterval = setInterval(() => {
+                if (gameState === 'PLAYING') {
+                    gameTime--;
+                    updateClockDisplay();
+                    if (gameTime <= 0) endGame();
+                }
+            }, 1000);
+
+            shotClockInterval = setInterval(() => {
+                if (gameState === 'PLAYING' && ball.holder) {
+                    shotClock--;
+                    updateClockDisplay();
+                    if (shotClock <= 0) {
+                        audio.playBuzzer();
+                        setCommentary("SHOT CLOCK VIOLATION!");
+                        resetPossession(ball.holder.team === 'HOME' ? 'AWAY' : 'HOME');
+                    }
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameState = 'GAMEOVER';
+            clearInterval(gameTimerInterval);
+            clearInterval(shotClockInterval);
+
+            audio.playBuzzer();
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('controls-bar').classList.add('hidden');
+            document.getElementById('commentary').classList.add('hidden');
+
+            const screen = document.getElementById('gameover-screen');
+            const sub = document.getElementById('game-result-subtitle');
+            screen.classList.remove('hidden');
+
+            if (homeScore > awayScore) {
+                sub.innerText = "Mizzou Wins the Rivalry!";
+                sub.style.color = '#00ffcc';
+            } else if (awayScore > homeScore) {
+                sub.innerText = `${selectedOpponent.school} Takes the Victory!`;
+                sub.style.color = '#ff3333';
+            } else {
+                sub.innerText = "It's a Tie Game!";
+                sub.style.color = '#F1B82D';
+            }
+
+            const tbody = document.getElementById('stats-body');
+            tbody.innerHTML = `
+                <tr>
+                    <td>Mizzou Tigers</td>
+                    <td>${homeScore}</td>
+                    <td>${homeFG.made}/${homeFG.att}</td>
+                    <td>${homeSteals}</td>
+                </tr>
+                <tr>
+                    <td>${selectedOpponent.school} ${selectedOpponent.name}</td>
+                    <td>${awayScore}</td>
+                    <td>${awayFG.made}/${awayFG.att}</td>
+                    <td>${awaySteals}</td>
+                </tr>
+            `;
+        }
+
+        function togglePause() {
+            if (gameState === 'PLAYING') {
+                gameState = 'PAUSED';
+                document.getElementById('pause-screen').classList.remove('hidden');
+            } else if (gameState === 'PAUSED') {
+                gameState = 'PLAYING';
+                document.getElementById('pause-screen').classList.add('hidden');
+            }
+        }
+
+        function initOpponentMenu() {
+            const grid = document.getElementById('team-selector');
+            grid.innerHTML = '';
+            OPPONENTS.forEach((opp, idx) => {
+                const card = document.createElement('div');
+                card.className = `team-card ${idx === selectedOpponentIndex ? 'selected' : ''}`;
+                card.innerHTML = `
+                    <div class="team-name">${opp.school} ${opp.name}</div>
+                    <div class="team-colors">
+                        <div class="color-dot" style="background:${opp.primary}"></div>
+                        <div class="color-dot" style="background:${opp.secondary}"></div>
+                    </div>
+                `;
+                card.onclick = () => {
+                    document.querySelectorAll('.team-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    selectedOpponentIndex = idx;
+                    selectedOpponent = OPPONENTS[idx];
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function resetGame() {
+            homeScore = 0; awayScore = 0;
+            homeFG = { made: 0, att: 0 }; awayFG = { made: 0, att: 0 };
+            homeSteals = 0; awaySteals = 0;
+            gameTime = 120; shotClock = 24;
+            homeTimeoutsLeft = 2;
+
+            document.getElementById('timeouts-left').innerText = 2;
+            document.getElementById('hud-timeouts').innerText = 2;
+            document.getElementById('away-name').innerText = selectedOpponent.name.toUpperCase();
+
+            players = [
+                new Player(COURT.x + 250, COURT.y + 200, 'HOME', true, 1),
+                new Player(COURT.x + 200, COURT.y + 300, 'HOME', false, 2),
+                new Player(COURT.x + 550, COURT.y + 200, 'AWAY', false, 10),
+                new Player(COURT.x + 600, COURT.y + 300, 'AWAY', false, 11)
+            ];
+
+            ball = new Ball();
+            resetPossession('HOME');
+            updateScoreDisplay();
+            updateClockDisplay();
+        }
+
+        function startGame() {
+            audio.init();
+            resetGame();
+            gameState = 'PLAYING';
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('tutorial-screen').classList.add('hidden');
+            document.getElementById('pause-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('controls-bar').classList.remove('hidden');
+            document.getElementById('commentary').classList.remove('hidden');
+
+            setCommentary("Tip-off! Mizzou takes possession.");
+            startTimers();
+        }
+
+        // --- Event Listeners ---
+        window.addEventListener('keydown', e => {
+            if (e.key in keys) keys[e.key] = true;
+
+            if (e.key === ' ' && !e.repeat && gameState === 'PLAYING') {
+                const now = performance.now();
+                if (now - lastSpaceTapTime < 250) passBall();
+                lastSpaceTapTime = now;
+
+                const user = players.find(p => p.isUserControlled);
+                if (user && user.hasBall) {
+                    spacePressedTime = now;
+                    spaceIsCharging = true;
+                } else {
+                    attemptSteal();
+                }
+            }
+
+            if ((e.key === 'p' || e.key === 'P') && gameState === 'PLAYING') passBall();
+            if ((e.key === 't' || e.key === 'T') && gameState === 'PLAYING') callTimeout();
+            if (e.key === 'Escape') togglePause();
+        });
+
+        window.addEventListener('keyup', e => {
+            if (e.key in keys) keys[e.key] = false;
+
+            if (e.key === ' ' && spaceIsCharging) {
+                spaceIsCharging = false;
+                releaseShot();
+            }
+        });
+
+        document.getElementById('start-btn').onclick = startGame;
+        document.getElementById('how-to-play-btn').onclick = () => document.getElementById('tutorial-screen').classList.remove('hidden');
+        document.getElementById('close-tutorial-btn').onclick = () => document.getElementById('tutorial-screen').classList.add('hidden');
+        document.getElementById('resume-btn').onclick = togglePause;
+        document.getElementById('restart-btn').onclick = () => {
+            document.getElementById('pause-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+            gameState = 'MENU';
+        };
+        document.getElementById('rematch-btn').onclick = startGame;
+        document.getElementById('menu-btn').onclick = () => {
+            document.getElementById('gameover-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+            gameState = 'MENU';
+        };
+
+        // Initialize Menu
+        initOpponentMenu();
+
+        // Main Loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawCourt();
+
+            if (gameState === 'PLAYING') {
+                handleUserMovement();
+                updateAI();
+                players.forEach(p => p.update());
+                ball.update();
+                checkBallCollisions();
+                updateParticles();
+            }
+
+            drawShotTrajectory();
+            players.forEach(p => p.draw());
+            ball.draw();
+            drawParticles();
+            drawShotMeter();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>

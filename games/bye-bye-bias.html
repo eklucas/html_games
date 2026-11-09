@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bye Bye Bias — Newsroom Challenge</title>
+<style>
+  :root {
+    --ink:#172321; --muted:#65716c; --paper:#fffdf5; --cream:#f2eddf;
+    --line:#c9c4b5; --red:#b33d32; --green:#27634f; --gold:#e7bd55;
+    --shadow:0 14px 40px rgba(28,35,31,.13);
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; color:var(--ink);
+    background:radial-gradient(circle at 12% 8%, #e4e9df 0, transparent 32%), #d8ddd5;
+    font-family:Georgia, "Times New Roman", serif;
+    min-height:100vh; padding:26px 14px 42px;
+  }
+  button { font:inherit; }
+  .shell { max-width:900px; margin:0 auto; }
+  .topline {
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    color:#46544e; font:700 11px/1.3 Arial,sans-serif; letter-spacing:.15em;
+    text-transform:uppercase; margin:0 3px 12px;
+  }
+  .paper {
+    background:var(--paper); border:1px solid #bcb7a8; box-shadow:var(--shadow);
+    padding:clamp(18px,4vw,38px); position:relative; overflow:hidden;
+  }
+  .paper:before {
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.15;
+    background-image:repeating-linear-gradient(0deg, transparent 0 4px, rgba(30,35,30,.035) 5px);
+  }
+  .masthead { position:relative; text-align:center; border-bottom:4px double var(--ink); padding-bottom:13px; }
+  .edition {
+    display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    font:700 10px Arial,sans-serif; letter-spacing:.13em; text-transform:uppercase;
+    border-bottom:1px solid var(--line); padding-bottom:8px; color:var(--muted);
+  }
+  h1 { margin:13px 0 2px; font-size:clamp(42px,8vw,74px); line-height:.92; letter-spacing:-.055em; }
+  .tagline { font:italic 14px Georgia,serif; color:#59645d; margin-top:8px; }
+  .gamebar {
+    position:relative; display:flex; justify-content:space-between; align-items:center;
+    gap:12px; margin:17px 0 20px; font:700 12px Arial,sans-serif;
+    text-transform:uppercase; letter-spacing:.08em;
+  }
+  .progress-track { height:7px; background:#e7e2d6; flex:1; max-width:300px; border-radius:8px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; background:var(--green); transition:width .25s ease; }
+  .score { white-space:nowrap; color:var(--green); }
+  .kicker { color:var(--red); font:800 11px Arial,sans-serif; letter-spacing:.2em; text-transform:uppercase; margin-bottom:10px; }
+  .headline {
+    font-size:clamp(29px,5.3vw,48px); line-height:1.03; letter-spacing:-.035em;
+    margin:0 0 13px; max-width:760px;
+  }
+  .deck { font:16px/1.5 Georgia,serif; color:#46514b; margin:0; max-width:720px; }
+  
+  .thin-line { border: 0; border-top: 1px solid var(--line); margin: 17px 0 20px; }
+
+  .prompt { font:700 14px Arial,sans-serif; margin:0 0 12px; }
+  
+  .choices { display:grid; grid-template-columns:1fr; gap:9px; position:relative; }
+  
+  .choice {
+    border:1px solid #bcb9ad; background:#fffefa; color:var(--ink);
+    padding:13px 14px; text-align:left; cursor:pointer; min-height:54px;
+    font:700 13px/1.35 Arial,sans-serif; transition:transform .12s, border-color .12s, background .12s;
+  }
+  .choice:hover:not(:disabled) { border-color:var(--green); transform:translateY(-1px); background:#f5f7f0; }
+  .choice:focus-visible, .action:focus-visible { outline:3px solid #d59b2c; outline-offset:3px; }
+  .choice:disabled { cursor:default; opacity:1; }
+  .choice.correct { border:2px solid var(--green) !important; background:#e9f2eb !important; }
+  .choice.incorrect { border:2px solid var(--red) !important; background:#f8eae6 !important; }
+  .choice .letter { display:inline-grid; place-items:center; width:22px; height:22px; border:1px solid #bcb9ad; border-radius:50%; margin-right:9px; font-size:11px; }
+  
+  .feedback {
+    display:none; position:relative; margin-top:18px; padding:15px;
+    border:1px solid #c8c3b5; background:#f5f1e6;
+  }
+  .feedback.show { display:block; animation:rise .2s ease-out; }
+  @keyframes rise { from {opacity:0; transform:translateY(5px)} to {opacity:1; transform:none} }
+  .brainy { display:flex; align-items:flex-start; gap:12px; }
+  .avatar {
+    width:64px; height:64px; flex:0 0 64px; 
+    display:flex; justify-content:center; align-items:center;
+  }
+  .avatar svg { width:100%; height:100%; }
+  .brainy h3 { margin:1px 0 5px; font:800 12px Arial,sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+  .brainy p { margin:0; font:15px/1.5 Georgia,serif; }
+  .resultline { font:700 12px Arial,sans-serif; margin-top:9px; color:var(--green); }
+  
+  .controls { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:19px; position:relative; }
+  .hint { color:var(--muted); font:italic 12px Georgia,serif; flex: 1; text-align: center; }
+  
+  .action {
+    border:0; background:var(--ink); color:white; padding:12px 18px; cursor:pointer;
+    font:800 12px Arial,sans-serif; letter-spacing:.08em; text-transform:uppercase;
+  }
+  .action:hover:not(:disabled) { background:var(--green); }
+  .action:disabled { opacity:.4; cursor:not-allowed; }
+  
+  .footer {
+    position:relative; margin-top:24px; padding-top:10px; border-top:3px double var(--ink);
+    display:flex; justify-content:space-between; gap:10px; color:var(--muted);
+    font:10px Arial,sans-serif; letter-spacing:.08em; text-transform:uppercase;
+  }
+  .intro, .finale { position:relative; text-align:center; padding:28px 8px 18px; }
+  .intro h2, .finale h2 { font-size:clamp(27px,4vw,38px); margin:0 0 12px; }
+  .intro p, .finale p { max-width:600px; margin:0 auto 18px; color:#46514b; font:16px/1.6 Georgia,serif; }
+  
+  .stamp { display:inline-block; border:2px solid var(--red); color:var(--red); padding:6px 12px; font:800 11px Arial,sans-serif; letter-spacing:.15em; text-transform:uppercase; margin-bottom:16px; }
+  .final-score { font-size:58px; font-weight:bold; color:var(--green); margin:8px 0; }
+  
+  .callout {
+    background: #f5f1e6; border: 1px solid #c8c3b5; padding: 20px;
+    font: italic 15px/1.6 Georgia, serif; color: var(--ink);
+    margin: 28px auto 0; max-width: 600px; text-align: left;
+  }
+
+  @media (max-width:560px) {
+    body { padding:12px 8px 24px; }
+    .gamebar { flex-wrap:wrap; }
+    .progress-track { order:3; flex-basis:100%; max-width:none; }
+    .controls { flex-direction: row; flex-wrap: wrap; justify-content: space-between; }
+    .hint { flex-basis: 100%; order: -1; margin-bottom: 12px; }
+  }
+  @media print {
+    body { background:white; padding:0; }
+    .paper { box-shadow:none; border:0; }
+    .action { display:none; }
+  }
+</style>
+</head>
+<body>
+<main class="shell">
+  <div class="topline"><span>A newsroom challenge</span><span>Read closely · Think critically</span></div>
+  <article class="paper" aria-live="polite">
+    <header class="masthead">
+      <div class="edition"><span>Truth has a tone</span><span>Vol. 01 · No. 06</span></div>
+      <h1>Bye Bye Bias</h1>
+      <div class="tagline">The little paper with a big eye for fairness</div>
+    </header>
+    
+    <section id="intro" class="intro">
+      <div class="stamp">Special interactive edition</div>
+      <h2>Can you spot the bias?</h2>
+      <p>Fictional local-news headlines await. Some lean in favor, some lean against, and some stick to the facts. Read the wording, choose how biased each headline sounds, and let Brainy explain the clues.</p>
+      <button class="action" id="startBtn">Open the first story →</button>
+      <p style="margin-top: 36px; font-style: italic; font-size: 13px; color: var(--muted);">All towns, people, organizations, and events in this game are invented for practice.</p>
+    </section>
+    
+    <section id="game" hidden>
+      <div class="gamebar">
+        <span id="count">Story 1 of 6</span>
+        <div class="progress-track" aria-label="Game progress"><div class="progress-fill" id="progress"></div></div>
+        <span class="score" id="score">Score: 0 / 6</span>
+      </div>
+      <div class="kicker" id="category">City hall</div>
+      <h2 class="headline" id="headline"></h2>
+      <p class="deck" id="deck"></p>
+      
+      <hr class="thin-line">
+      
+      <p class="prompt">How does this headline frame the story?</p>
+      <div class="choices" id="choices"></div>
+      
+      <div class="feedback" id="feedback">
+        <div class="brainy">
+          <div class="avatar" aria-hidden="true">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <!-- Body -->
+              <path d="M 15 100 C 15 65, 85 65, 85 100" fill="#36725c" stroke="#172321" stroke-width="3"/>
+              <!-- Collar -->
+              <path d="M 35 75 L 50 85 L 65 75 Z" fill="#fffdf5" stroke="#172321" stroke-width="2"/>
+              <!-- Brain Head -->
+              <path d="M 50 10 C 15 10, 10 40, 25 55 C 20 70, 35 85, 50 78 C 65 85, 80 70, 75 55 C 90 40, 85 10, 50 10" fill="#f4a2a2" stroke="#172321" stroke-width="3"/>
+              <!-- Brain folds (subtle lines) -->
+              <path d="M 50 10 Q 50 40, 50 78 M 30 25 Q 40 35, 50 30 M 70 25 Q 60 35, 50 30" fill="none" stroke="#d48080" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- Glasses -->
+              <rect x="25" y="42" width="20" height="14" rx="2" fill="#ffffff" fill-opacity="0.6" stroke="#172321" stroke-width="3"/>
+              <rect x="55" y="42" width="20" height="14" rx="2" fill="#ffffff" fill-opacity="0.6" stroke="#172321" stroke-width="3"/>
+              <!-- Glasses bridge and arms -->
+              <line x1="45" y1="49" x2="55" y2="49" stroke="#172321" stroke-width="3"/>
+              <line x1="25" y1="46" x2="15" y2="42" stroke="#172321" stroke-width="3"/>
+              <line x1="75" y1="46" x2="85" y2="42" stroke="#172321" stroke-width="3"/>
+              <!-- Eyes -->
+              <circle cx="35" cy="49" r="2.5" fill="#172321"/>
+              <circle cx="65" cy="49" r="2.5" fill="#172321"/>
+              <!-- Smile -->
+              <path d="M 42 62 Q 50 70, 58 62" fill="none" stroke="#172321" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div><h3>Brainy says…</h3><p id="explanation"></p><div class="resultline" id="resultline"></div></div>
+        </div>
+      </div>
+      
+      <div class="controls">
+        <button class="action" id="prevBtn">← Back</button>
+        <span class="hint" id="hint">Look for loaded words and missing context.</span>
+        <button class="action" id="nextBtn" disabled>Next story →</button>
+      </div>
+    </section>
+    
+    <section id="finale" class="finale" hidden>
+      <div class="stamp">Edition complete</div>
+      <h2>You've read between the lines!</h2>
+      <div class="final-score" id="finalScore">0 / 6</div>
+      <p id="finalMessage"></p>
+      <button class="action" id="restartBtn">Play again ↻</button>
+      <div class="callout">
+        A headline can influence readers through word choice, emotional tone, exaggeration, or selective framing. Always compare it with the full story and other reliable reporting.
+      </div>
+    </section>
+    
+    <footer class="footer"></footer>
+  </article>
+</main>
+<script>
+(() => {
+  "use strict";
+  const options = [
+    "Very biased in favor",
+    "Somewhat biased in favor",
+    "Unbiased",
+    "Somewhat biased against",
+    "Very biased against"
+  ];
+  
+  const allStories = [
+    // 0: Very biased in favor
+    {
+      category:"City hall",
+      headline:"Council’s brilliant park plan promises a greener, happier neighborhood",
+      deck:"The proposal would add trees, benches, and a walking path to a vacant lot. A public hearing is scheduled for next month.",
+      answer:0,
+      explanation:"“Brilliant” and “greener, happier” praise the proposal and predict positive results before they happen. The headline gives the plan an enthusiastic endorsement."
+    },
+    {
+      category:"Public Works",
+      headline:"Heroic sanitation workers save the day with flawless new recycling rollout",
+      deck:"The city's new recycling bins were delivered this week. Officials say the residential transition is complete.",
+      answer:0,
+      explanation:"Calling the workers “heroic” and the rollout “flawless” represents extreme praise that goes beyond the basic facts of delivering bins."
+    },
+    {
+      category:"Community Events",
+      headline:"Spectacular downtown festival proves our town is the absolute best place to live",
+      deck:"The annual summer street fair drew an estimated 5,000 attendees this weekend, featuring local bands and food vendors.",
+      answer:0,
+      explanation:"The headline makes a sweeping, subjective claim (“best place to live”) and uses exaggerated praise (“spectacular”) instead of letting the high attendance numbers speak for themselves."
+    },
+
+    // 1: Somewhat biased in favor
+    {
+      category:"Neighborhood life",
+      headline:"Library’s expanded weekend hours offer a welcome boost for families",
+      deck:"The branch will stay open two extra hours on Saturdays during a three-month trial. Staff will track attendance during the pilot.",
+      answer:1,
+      explanation:"“Welcome boost” gives the change a positive spin, but the language is mildly supportive rather than overwhelmingly enthusiastic."
+    },
+    {
+      category:"Local Economy",
+      headline:"Promising new bakery brings a sweet upgrade to Main Street",
+      deck:"A new locally owned pastry shop opened on Tuesday in the previously vacant storefront on the corner of Main and Elm.",
+      answer:1,
+      explanation:"Words like “promising” and “sweet upgrade” gently steer the reader to view the business positively, showing a slight bias in favor."
+    },
+    {
+      category:"Public Safety",
+      headline:"Helpful new crosswalks aim to ease pedestrian worries near school",
+      deck:"The transportation department painted high-visibility crosswalks at three intersections near the elementary school.",
+      answer:1,
+      explanation:"Labeling the crosswalks “helpful” and stating they “ease worries” assumes a positive emotional outcome for the community, giving the story a mildly favorable tilt."
+    },
+
+    // 2: Unbiased
+    {
+      category:"Schools",
+      headline:"School board considers changing start times after parent feedback",
+      deck:"Board members are reviewing several schedule options. No decision has been made, and another public meeting is planned.",
+      answer:2,
+      explanation:"This headline sticks to verifiable actions: the board is considering a change after receiving feedback. It avoids praise, criticism, or emotional language."
+    },
+    {
+      category:"Local Government",
+      headline:"City council votes 5-2 to increase downtown parking meter rates",
+      deck:"Starting next month, parking rates will rise by 50 cents an hour. Revenue will go toward road maintenance.",
+      answer:2,
+      explanation:"This headline is completely neutral and factual. It states the action, the vote tally, and the subject without adding any subjective spin."
+    },
+    {
+      category:"Public Utilities",
+      headline:"Water department announces scheduled maintenance for Westside neighborhood",
+      deck:"Residents may experience low water pressure on Thursday morning as crews replace a water main installed in 1980.",
+      answer:2,
+      explanation:"The headline plainly states the facts of who, what, and where, without telling the reader how to feel about the maintenance."
+    },
+
+    // 3: Somewhat biased against
+    {
+      category:"Local business",
+      headline:"Residents question whether proposed shopping center will worsen traffic",
+      deck:"At a neighborhood meeting, some residents raised concerns about congestion near the proposed site. A traffic review has not yet been completed.",
+      answer:3,
+      explanation:"“Worsen traffic” frames the proposal around a possible negative effect. It attributes the concern to residents, leaning against the project without using extreme language."
+    },
+    {
+      category:"Education",
+      headline:"Frustrated parents push back against confusing new math curriculum",
+      deck:"A group of parents spoke at the school board meeting, asking for additional resources to help understand the new teaching methods.",
+      answer:3,
+      explanation:"Highlighting “frustrated” and “confusing” emphasizes the negative reaction. While grounded in feedback, it frames the curriculum entirely through dissatisfaction."
+    },
+    {
+      category:"Housing",
+      headline:"Controversial apartment complex sparks worries over neighborhood character",
+      deck:"A developer proposed a four-story apartment building in a predominantly single-family neighborhood. The zoning board will review the plan.",
+      answer:3,
+      explanation:"Calling the project “controversial” and centering the “worries” frames the proposal negatively from the start, though it avoids outright condemnation."
+    },
+
+    // 4: Very biased against
+    {
+      category:"Transportation",
+      headline:"New traffic plan leaves drivers trapped in a ridiculous downtown mess",
+      deck:"A proposed street redesign would add a bus-only lane and adjust parking on two blocks. The city says it is gathering public comments.",
+      answer:4,
+      explanation:"“Trapped,” “ridiculous,” and “mess” are strongly negative and tell readers exactly how to feel about the plan. It presents the change as a failure."
+    },
+    {
+      category:"Parks",
+      headline:"Greedy developers threaten beloved riverside trail with ugly building proposal",
+      deck:"A company has submitted plans for a mixed-use building near the river. The proposal is awaiting review, and the trail would remain open.",
+      answer:4,
+      explanation:"“Greedy,” “threaten,” “beloved,” and “ugly” are emotionally charged. They condemn the developers and proposal before the facts are reviewed."
+    },
+    {
+      category:"City Budget",
+      headline:"Disastrous tax hike will crush hardworking families and destroy local shops",
+      deck:"The mayor proposed a 1% increase in the local sales tax to close a budget shortfall. The council will vote next Tuesday.",
+      answer:4,
+      explanation:"Words like “disastrous,” “crush,” and “destroy” are extreme and catastrophic. This frames a standard tax proposal as an apocalyptic event."
+    }
+  ];
+
+  let currentStories = [];
+  let current = 0;
+  let userAnswers = [];
+
+  const $ = id => document.getElementById(id);
+  const intro = $("intro"), game = $("game"), finale = $("finale");
+
+  function shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function pickStories() {
+    const groups = { 0:[], 1:[], 2:[], 3:[], 4:[] };
+    allStories.forEach(s => groups[s.answer].push(s));
+    
+    let selected = [];
+    let remaining = [];
+
+    for (let i = 0; i <= 4; i++) {
+      let shuffledGroup = shuffle(groups[i]);
+      selected.push(shuffledGroup.pop()); 
+      remaining = remaining.concat(shuffledGroup);
+    }
+
+    remaining = shuffle(remaining);
+    selected.push(remaining.pop());
+
+    return shuffle(selected);
+  }
+
+  function start() {
+    currentStories = pickStories();
+    current = 0;
+    userAnswers = new Array(currentStories.length).fill(null);
+    intro.hidden = true; finale.hidden = true; game.hidden = false;
+    render();
+  }
+
+  function render() {
+    const s = currentStories[current];
+    $("count").textContent = `Story ${current + 1} of ${currentStories.length}`;
+    
+    let currentScore = userAnswers.filter((a, i) => a === currentStories[i].answer).length;
+    $("score").textContent = `Score: ${currentScore} / ${currentStories.length}`;
+    
+    $("progress").style.width = `${(current / currentStories.length) * 100}%`;
+    $("category").textContent = s.category;
+    $("headline").textContent = s.headline;
+    $("deck").textContent = s.deck;
+    
+    $("feedback").classList.remove("show");
+    $("explanation").textContent = "";
+    $("resultline").textContent = "";
+    
+    $("prevBtn").disabled = false;
+    $("nextBtn").disabled = userAnswers[current] === null;
+    $("nextBtn").textContent = current === currentStories.length - 1 ? "See my results →" : "Next story →";
+    
+    const holder = $("choices");
+    holder.replaceChildren();
+    options.forEach((label, index) => {
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.type = "button";
+      btn.innerHTML = `<span class="letter">${String.fromCharCode(65 + index)}</span><span></span>`;
+      btn.querySelector("span:last-child").textContent = label;
+      btn.addEventListener("click", () => choose(index));
+      holder.appendChild(btn);
+    });
+
+    if (userAnswers[current] !== null) {
+      choose(userAnswers[current], true);
+    }
+  }
+
+  function choose(index, isRestore = false) {
+    // If the question has already been answered and this is a new click, prevent changing
+    if (!isRestore && userAnswers[current] !== null) return;
+    
+    const s = currentStories[current];
+    userAnswers[current] = index; 
+    
+    let currentScore = userAnswers.filter((a, i) => a === currentStories[i].answer).length;
+    $("score").textContent = `Score: ${currentScore} / ${currentStories.length}`;
+
+    const buttons = [...$("choices").querySelectorAll("button")];
+    buttons.forEach((btn, i) => {
+      btn.disabled = true; // Disable buttons to lock in the answer
+      btn.classList.remove("correct", "incorrect");
+      if (i === s.answer) btn.classList.add("correct");
+      if (i === index && index !== s.answer) btn.classList.add("incorrect");
+    });
+
+    const isCorrect = index === s.answer;
+    $("explanation").textContent = s.explanation;
+    $("resultline").textContent = isCorrect
+      ? "That’s right — sharp reading!"
+      : `Not quite. The best answer is “${options[s.answer]}.”`;
+    
+    if (!isRestore) {
+      $("feedback").classList.remove("show");
+      void $("feedback").offsetWidth; 
+    }
+    
+    $("feedback").classList.add("show");
+    $("nextBtn").disabled = false;
+    $("hint").textContent = "Brainy’s tip: judge the wording, not whether you agree with the issue.";
+  }
+
+  function finish() {
+    game.hidden = true; finale.hidden = false;
+    $("progress").style.width = "100%";
+    
+    let finalScore = userAnswers.filter((a, i) => a === currentStories[i].answer).length;
+    $("finalScore").textContent = `${finalScore} / ${currentStories.length}`;
+    
+    let message;
+    if (finalScore === 6) message = "Perfect score! You spotted every headline’s slant. Keep checking for loaded language and missing context.";
+    else if (finalScore >= 4) message = "Nice work! You’re learning to separate a headline’s tone from the information it reports.";
+    else if (finalScore >= 2) message = "Good start. Try reading headlines slowly and noticing praise, blame, dramatic adjectives, and whose viewpoint is centered.";
+    else message = "Every newsroom reader starts somewhere. Replay and look for words that praise, blame, exaggerate, or make a prediction sound certain.";
+    
+    $("finalMessage").textContent = message;
+  }
+
+  $("startBtn").addEventListener("click", start);
+  
+  $("prevBtn").addEventListener("click", () => {
+    if (current === 0) {
+      game.hidden = true;
+      intro.hidden = false;
+    } else {
+      current--;
+      render();
+    }
+  });
+
+  $("nextBtn").addEventListener("click", () => {
+    if (userAnswers[current] === null) return;
+    if (current === currentStories.length - 1) finish();
+    else { current++; render(); }
+  });
+  
+  $("restartBtn").addEventListener("click", () => {
+    finale.hidden = true;
+    intro.hidden = false;
+  });
+})();
+</script>
+</body>
+</html>
